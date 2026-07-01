@@ -1,0 +1,13 @@
+\HypoTableConfig{type=rubric,density=normal,width=0.9\linewidth,caption={YAML configured rubric},label={tab:yaml-columns},header=true,striped=false}
+---
+\HypoTableColumn{align=left,width=0.34\linewidth,weight=2}
+---
+\HypoTableColumn{align=center,width=0.18\linewidth,weight=1}
+---
+\HypoTableColumn{align=right,width=0.28\linewidth,weight=3}
+---
+\begin{tblr}
+---
+Criterion & Score & Comment
+---
+Safety & 5 & No raw LaTeX escape hatch

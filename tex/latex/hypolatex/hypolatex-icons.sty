@@ -1,0 +1,85 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-icons}[2026/06/28 Hypo-LaTeX icon abstraction]
+
+\RequirePackage{xparse}
+\IfFileExists{fontawesome5.sty}{%
+  \RequirePackage{fontawesome5}
+}{}
+
+\ExplSyntaxOn
+\NewDocumentCommand{\HypoIcon}{m}
+  {
+    \str_case:nnF { #1 }
+      {
+        { book-open } { \hypo_icon_book_open: }
+        { language } { \hypo_icon_language: }
+        { note } { \hypo_icon_note: }
+        { tip } { \hypo_icon_tip: }
+        { warning } { \hypo_icon_warning: }
+        { summary } { \hypo_icon_summary: }
+        { objective } { \hypo_icon_objective: }
+        { info } { \hypo_icon_info: }
+        { task } { \hypo_icon_task: }
+        { requirement } { \hypo_icon_requirement: }
+        { deliverable } { \hypo_icon_deliverable: }
+        { checklist } { \hypo_icon_checklist: }
+        { question } { \hypo_icon_question: }
+        { hint } { \hypo_icon_hint: }
+        { answer } { \hypo_icon_answer: }
+        { solution } { \hypo_icon_solution: }
+        { rubric } { \hypo_icon_rubric: }
+      }
+      { \hypo_icon_fallback: }
+  }
+
+\cs_new_protected:Npn \hypo_icon_book_open:
+  { \cs_if_exist:NTF \faBookOpen { \faBookOpen } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_language:
+  { \cs_if_exist:NTF \faLanguage { \faLanguage } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_note:
+  { \cs_if_exist:NTF \faInfoCircle { \faInfoCircle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_tip:
+  { \cs_if_exist:NTF \faLightbulb { \faLightbulb } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_warning:
+  { \cs_if_exist:NTF \faExclamationTriangle { \faExclamationTriangle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_summary:
+  { \cs_if_exist:NTF \faCheckCircle { \faCheckCircle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_objective:
+  { \cs_if_exist:NTF \faBullseye { \faBullseye } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_info:
+  { \cs_if_exist:NTF \faInfoCircle { \faInfoCircle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_task:
+  { \cs_if_exist:NTF \faTasks { \faTasks } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_requirement:
+  { \cs_if_exist:NTF \faClipboardCheck { \faClipboardCheck } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_deliverable:
+  { \cs_if_exist:NTF \faBoxOpen { \faBoxOpen } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_checklist:
+  { \cs_if_exist:NTF \faCheckSquare { \faCheckSquare } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_question:
+  { \cs_if_exist:NTF \faQuestionCircle { \faQuestionCircle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_hint:
+  { \cs_if_exist:NTF \faLightbulb { \faLightbulb } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_answer:
+  { \cs_if_exist:NTF \faCheckCircle { \faCheckCircle } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_solution:
+  { \cs_if_exist:NTF \faChalkboardTeacher { \faChalkboardTeacher } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_rubric:
+  { \cs_if_exist:NTF \faClipboardList { \faClipboardList } { \hypo_icon_fallback: } }
+\cs_new_protected:Npn \hypo_icon_fallback: { \ensuremath{\bullet} }
+\ExplSyntaxOff
+
+\newlength{\HypoIconSlotWidth}
+\setlength{\HypoIconSlotWidth}{1.35em}
+\newlength{\HypoIconTitleGap}
+\setlength{\HypoIconTitleGap}{0.45em}
+\newlength{\HypoIconTitleIndent}
+\setlength{\HypoIconTitleIndent}{1.80em}
+
+\NewDocumentCommand{\HypoTitleIcon}{m}{%
+  \makebox[\HypoIconSlotWidth][c]{\HypoIcon{#1}}%
+}
+
+\NewDocumentCommand{\HypoIconTitle}{m m}{%
+  \HypoTitleIcon{#1}\hspace{\HypoIconTitleGap}#2%
+}

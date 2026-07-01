@@ -1,0 +1,119 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-tables}[2026/06/29 Hypo-LaTeX controlled tables]
+
+\RequirePackage[table]{xcolor}
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{tabularray}
+\RequirePackage{xparse}
+
+\UseTblrLibrary{booktabs}
+
+\providecolor{HypoTableStripe}{HTML}{F6F8FA}
+
+\ExplSyntaxOn
+\tl_new:N \l_hypo_table_type_tl
+\tl_new:N \l_hypo_table_long_tl
+\tl_new:N \l_hypo_table_density_tl
+\tl_new:N \l_hypo_table_width_tl
+\tl_new:N \l_hypo_table_caption_tl
+\tl_new:N \l_hypo_table_label_tl
+\tl_new:N \l_hypo_table_header_tl
+\tl_new:N \l_hypo_table_striped_tl
+\tl_new:N \l_hypo_table_columns_tl
+
+\cs_new_protected:Npn \hypo_table_reset:
+  {
+    \tl_set:Nn \l_hypo_table_type_tl { default }
+    \tl_set:Nn \l_hypo_table_long_tl { false }
+    \tl_set:Nn \l_hypo_table_density_tl { normal }
+    \tl_set:Nn \l_hypo_table_width_tl { \linewidth }
+    \tl_clear:N \l_hypo_table_caption_tl
+    \tl_clear:N \l_hypo_table_label_tl
+    \tl_set:Nn \l_hypo_table_header_tl { true }
+    \tl_set:Nn \l_hypo_table_striped_tl { false }
+    \tl_clear:N \l_hypo_table_columns_tl
+  }
+
+\keys_define:nn { hypo / table / config }
+  {
+    type .tl_set:N = \l_hypo_table_type_tl,
+    long .tl_set:N = \l_hypo_table_long_tl,
+    density .tl_set:N = \l_hypo_table_density_tl,
+    width .tl_set:N = \l_hypo_table_width_tl,
+    caption .tl_set:N = \l_hypo_table_caption_tl,
+    label .tl_set:N = \l_hypo_table_label_tl,
+    header .tl_set:N = \l_hypo_table_header_tl,
+    striped .tl_set:N = \l_hypo_table_striped_tl,
+  }
+
+\keys_define:nn { hypo / table / column }
+  {
+    align .code:n = {},
+    width .code:n = {},
+    weight .code:n = {},
+  }
+
+\NewDocumentCommand{\HypoTableConfig}{m}
+  {
+    \hypo_table_reset:
+    \keys_set:nn { hypo / table / config } { #1 }
+  }
+
+\NewDocumentCommand{\HypoTableColumn}{m}
+  {
+    \tl_put_right:Nn \l_hypo_table_columns_tl { \HypoTableColumnSpec{#1} }
+    \keys_set:nn { hypo / table / column } { #1 }
+  }
+
+\NewDocumentCommand{\HypoTableColumnSpec}{m}{}
+
+\cs_new_protected:Npn \hypo_table_caption:
+  {
+    \tl_if_blank:NTF \l_hypo_table_caption_tl
+      {
+        \tl_if_blank:NF \l_hypo_table_label_tl
+          {
+            \caption{}
+            \label{\l_hypo_table_label_tl}
+          }
+      }
+      {
+        \caption{\l_hypo_table_caption_tl}
+        \tl_if_blank:NF \l_hypo_table_label_tl
+          { \label{\l_hypo_table_label_tl} }
+      }
+  }
+
+% Non-long controlled tables deliberately use tabularray's tblr surface.
+\NewDocumentEnvironment{HypoTblrTable}{m +b}
+  {
+    \par\smallskip
+    \begin{table}[htbp]
+      \centering
+      \hypo_table_caption:
+      \begin{tblr}{#1}
+        #2
+      \end{tblr}
+    \end{table}
+    \smallskip
+  }
+  {}
+
+% Long controlled tables intentionally use a longtable fallback.
+% This avoids relying on longtblr behavior for the M5 MVP while preserving
+% real page breaking for large tables.
+\NewDocumentEnvironment{HypoLongTable}{m m}
+  {
+    \par\smallskip
+    \begingroup
+      \renewcommand{\arraystretch}{#2}
+      \begin{longtable}{#1}
+  }
+  {
+      \end{longtable}
+    \endgroup
+    \smallskip
+  }
+\ExplSyntaxOff

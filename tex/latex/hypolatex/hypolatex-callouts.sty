@@ -1,0 +1,70 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-callouts}[2026/06/28 Hypo-LaTeX callout environments]
+
+\RequirePackage{tcolorbox}
+\tcbuselibrary{breakable}
+\providecommand{\HypoSemanticTitleFont}{\bfseries}
+
+\newtcolorbox{HypoNote}{
+  breakable,
+  colback=HypoNoteBack,
+  colframe=HypoNoteFrame,
+  colbacktitle=HypoNoteTitleBack,
+  coltitle=HypoNoteTitleText,
+  fonttitle=\HypoSemanticTitleFont,
+  title={\HypoIconTitle{note}{Note}},
+  arc=2mm,
+  boxrule=0.6pt,
+  left=8pt,
+  right=8pt,
+  top=7pt,
+  bottom=7pt
+}
+
+\newtcolorbox{HypoTip}{
+  breakable,
+  colback=HypoTipBack,
+  colframe=HypoTipFrame,
+  colbacktitle=HypoTipTitleBack,
+  coltitle=HypoTipTitleText,
+  fonttitle=\HypoSemanticTitleFont,
+  title={\HypoIconTitle{tip}{Tip}},
+  arc=2mm,
+  boxrule=0.6pt,
+  left=8pt,
+  right=8pt,
+  top=7pt,
+  bottom=7pt
+}
+
+\newtcolorbox{HypoWarning}{
+  breakable,
+  colback=HypoWarningBack,
+  colframe=HypoWarningFrame,
+  colbacktitle=HypoWarningTitleBack,
+  coltitle=HypoWarningTitleText,
+  fonttitle=\HypoSemanticTitleFont,
+  title={\HypoIconTitle{warning}{Warning}},
+  arc=2mm,
+  boxrule=0.6pt,
+  left=8pt,
+  right=8pt,
+  top=7pt,
+  bottom=7pt
+}
+
+\newtcolorbox{HypoSummary}{
+  breakable,
+  colback=HypoSummaryBack,
+  colframe=HypoSummaryFrame,
+  colbacktitle=HypoSummaryTitleBack,
+  coltitle=HypoSummaryTitleText,
+  fonttitle=\HypoSemanticTitleFont,
+  title={\HypoIconTitle{summary}{Summary}},
+  arc=2mm,
+  boxrule=0.6pt,
+  left=8pt,
+  right=8pt,
+  top=7pt,
+  bottom=7pt
+}

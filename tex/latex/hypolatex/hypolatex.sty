@@ -1,0 +1,154 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex}[2026/06/28 Hypo-LaTeX longform package]
+
+\RequirePackage{iftex}
+\ifXeTeX
+\else
+  \PackageError{hypolatex}{Hypo-LaTeX requires XeLaTeX}{Run latexmk with -xelatex.}
+\fi
+
+\RequirePackage[UTF8]{ctex}
+\RequirePackage{fontspec}
+\makeatletter
+\newcommand{\Hypo@SetMainFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setmainfont{#1}}{}%
+}
+\newcommand{\Hypo@SetSansFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setsansfont{#1}}{}%
+}
+\newcommand{\Hypo@SetMonoFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setmonofont{#1}}{}%
+}
+\newcommand{\Hypo@SetCJKMainFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setCJKmainfont{#1}}{}%
+}
+\newcommand{\Hypo@SetCJKSansFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setCJKsansfont{#1}}{}%
+}
+\newcommand{\Hypo@SetCJKMonoFontIfExists}[1]{%
+  \IfFontExistsTF{#1}{\setCJKmonofont{#1}}{}%
+}
+
+\newcommand{\HypoTitleFont}{\sffamily}
+\newcommand{\HypoChapterTitleFont}{\HypoTitleFont}
+\newcommand{\HypoCoverTitleFont}{\HypoTitleFont}
+\newcommand{\HypoSerifTitleFont}{\rmfamily}
+\newcommand{\HypoSerifModuleFont}{\rmfamily}
+\newcommand{\HypoSemanticTitleFont}{\HypoTitleFont\bfseries}
+\newcommand{\HypoQuestionTitleFont}{\HypoTitleFont\bfseries}
+\newcommand{\HypoAnswerTitleFont}{\HypoTitleFont\bfseries}
+\newcommand{\HypoRubricTitleFont}{\HypoTitleFont\bfseries}
+
+\newcommand{\HypoNotoSerifDisplayFont}{\rmfamily}
+\newcommand{\HypoNotoSerifModuleFont}{\rmfamily}
+\IfFontExistsTF{Noto Serif CJK SC Black}{%
+  \newfontfamily\HypoNotoSerifDisplayLatin{Noto Serif CJK SC Black}%
+  \newCJKfontfamily\HypoNotoSerifDisplayCJK{Noto Serif CJK SC Black}%
+  \renewcommand{\HypoNotoSerifDisplayFont}{%
+    \HypoNotoSerifDisplayLatin\HypoNotoSerifDisplayCJK
+  }%
+}{}%
+\IfFontExistsTF{Noto Serif CJK SC Bold}{%
+  \newfontfamily\HypoNotoSerifModuleLatin{Noto Serif CJK SC Bold}%
+  \newCJKfontfamily\HypoNotoSerifModuleCJK{Noto Serif CJK SC Bold}%
+  \renewcommand{\HypoNotoSerifModuleFont}{%
+    \HypoNotoSerifModuleLatin\HypoNotoSerifModuleCJK
+  }%
+}{}%
+
+\newcommand{\Hypo@UseNotoSerifRoleFonts}{%
+  \renewcommand{\HypoTitleFont}{\HypoNotoSerifDisplayFont}%
+  \renewcommand{\HypoChapterTitleFont}{\HypoNotoSerifDisplayFont}%
+  \renewcommand{\HypoCoverTitleFont}{\HypoNotoSerifDisplayFont}%
+  \renewcommand{\HypoSerifTitleFont}{\HypoNotoSerifDisplayFont}%
+  \renewcommand{\HypoSerifModuleFont}{\HypoNotoSerifModuleFont}%
+  \renewcommand{\HypoSemanticTitleFont}{\HypoSerifModuleFont\bfseries}%
+  \renewcommand{\HypoQuestionTitleFont}{\HypoSerifModuleFont\bfseries}%
+  \renewcommand{\HypoAnswerTitleFont}{\HypoSerifModuleFont\bfseries}%
+  \renewcommand{\HypoRubricTitleFont}{\HypoSerifModuleFont\bfseries}%
+}
+
+\newcommand{\HypoUseStableFonts}{%
+  \IfFontExistsTF{Noto Serif CJK SC}{%
+    \setmainfont{Noto Serif CJK SC}[
+      BoldFont={Noto Serif CJK SC Bold}
+    ]%
+    \setCJKmainfont{Noto Serif CJK SC}[
+      BoldFont={Noto Serif CJK SC Bold}
+    ]%
+  }{}%
+  \IfFontExistsTF{Noto Sans CJK SC}{%
+    \setsansfont{Noto Sans CJK SC}[
+      BoldFont={Noto Sans CJK SC Bold}
+    ]%
+    \setCJKsansfont{Noto Sans CJK SC}[
+      BoldFont={Noto Sans CJK SC Bold}
+    ]%
+  }{}%
+  \IfFontExistsTF{LXGW WenKai Mono}{%
+    \setmonofont{LXGW WenKai Mono}%
+    \setCJKmonofont{LXGW WenKai Mono}%
+  }{%
+    \IfFontExistsTF{Noto Sans Mono CJK SC}{%
+      \setmonofont{Noto Sans Mono CJK SC}%
+      \setCJKmonofont{Noto Sans Mono CJK SC}%
+    }{}%
+  }%
+  \Hypo@UseNotoSerifRoleFonts
+}
+
+\newcommand{\HypoUseReadableFonts}{%
+  \HypoUseStableFonts
+}
+
+\newcommand{\HypoUseTechFonts}{%
+  \HypoUseStableFonts
+  \Hypo@SetSansFontIfExists{Sarasa Gothic SC}%
+  \Hypo@SetCJKSansFontIfExists{Sarasa Gothic SC}%
+}
+
+\newcommand{\HypoUseWarmFonts}{%
+  \HypoUseStableFonts
+  \Hypo@UseNotoSerifRoleFonts
+}
+
+\newcommand{\HypoUseAcademicFonts}{%
+  \HypoUseStableFonts
+  \Hypo@SetSansFontIfExists{Sarasa Gothic SC}%
+  \Hypo@SetCJKSansFontIfExists{Sarasa Gothic SC}%
+}
+
+\HypoUseStableFonts
+\makeatother
+\RequirePackage{hypolatex-core}
+\RequirePackage{hypolatex-icons}
+\RequirePackage{hypolatex-theme-plain}
+\makeatletter
+\newcommand{\HypoUseTheme}[1]{%
+  \ifstrequal{#1}{plain}{%
+    \renewcommand{\HypoThemeName}{plain}%
+  }{%
+    \ifstrequal{#1}{classic-readable}{%
+      \RequirePackage{hypolatex-theme-classic-readable}%
+    }{%
+      \ifstrequal{#1}{tech-minimal}{%
+        \RequirePackage{hypolatex-theme-tech-minimal}%
+      }{%
+        \ifstrequal{#1}{warm-handbook}{%
+          \RequirePackage{hypolatex-theme-warm-handbook}%
+        }{%
+          \ifstrequal{#1}{academic-clean}{%
+            \RequirePackage{hypolatex-theme-academic-clean}%
+          }{%
+            \PackageError{hypolatex}{Unknown theme `#1`}{Supported themes: plain, classic-readable, tech-minimal, warm-handbook, academic-clean.}%
+          }%
+        }%
+      }%
+    }%
+  }%
+}
+\makeatother
+\RequirePackage{hypolatex-layout}
+\RequirePackage{hypolatex-callouts}
+\RequirePackage{hypolatex-semantics}
+\RequirePackage{hypolatex-tables}

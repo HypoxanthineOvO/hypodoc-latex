@@ -1,0 +1,302 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-semantics}[2026/06/29 Hypo-LaTeX semantic block environments]
+
+\RequirePackage{etoolbox}
+\RequirePackage{xparse}
+\RequirePackage{xcolor}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+
+\providecommand{\HypoTitleFont}{\sffamily}
+\providecommand{\HypoSemanticTitleFont}{\HypoTitleFont\bfseries}
+\providecommand{\HypoQuestionTitleFont}{\HypoTitleFont\bfseries}
+\providecommand{\HypoAnswerTitleFont}{\HypoTitleFont\bfseries}
+\providecommand{\HypoRubricTitleFont}{\HypoTitleFont\bfseries}
+\providecommand{\HypoIfAnswerVisibleTF}[2]{#1}
+\providecommand{\HypoIcon}[1]{\ensuremath{\bullet}}
+\providecommand{\HypoIconTitle}[2]{\HypoIcon{#1}\quad #2}
+
+\providecolor{HypoSemanticBack}{HTML}{F8FAFC}
+\providecolor{HypoSemanticFrame}{HTML}{94A3B8}
+\providecolor{HypoSemanticTitleBack}{HTML}{E2E8F0}
+\providecolor{HypoSemanticTitleText}{HTML}{1F2933}
+\providecolor{HypoRequirementBack}{HTML}{FFF7ED}
+\providecolor{HypoRequirementFrame}{HTML}{EA580C}
+\providecolor{HypoRequirementTitleBack}{HTML}{FED7AA}
+\providecolor{HypoRequirementTitleText}{HTML}{7C2D12}
+\providecolor{HypoQuestionBack}{HTML}{EFF6FF}
+\providecolor{HypoQuestionFrame}{HTML}{2563EB}
+\providecolor{HypoQuestionTitleBack}{HTML}{1D4ED8}
+\providecolor{HypoQuestionTitleText}{HTML}{FFFFFF}
+\providecolor{HypoHintBack}{HTML}{FEFCE8}
+\providecolor{HypoHintFrame}{HTML}{CA8A04}
+\providecolor{HypoHintTitleBack}{HTML}{FEF3C7}
+\providecolor{HypoHintTitleText}{HTML}{713F12}
+\providecolor{HypoAnswerBack}{HTML}{F0FDF4}
+\providecolor{HypoAnswerFrame}{HTML}{16A34A}
+\providecolor{HypoAnswerTitleBack}{HTML}{DCFCE7}
+\providecolor{HypoAnswerTitleText}{HTML}{14532D}
+\providecolor{HypoSolutionBack}{HTML}{F5F3FF}
+\providecolor{HypoSolutionFrame}{HTML}{7C3AED}
+\providecolor{HypoSolutionTitleBack}{HTML}{EDE9FE}
+\providecolor{HypoSolutionTitleText}{HTML}{4C1D95}
+\providecolor{HypoRubricBack}{HTML}{FDF2F8}
+\providecolor{HypoRubricFrame}{HTML}{BE185D}
+\providecolor{HypoRubricTitleBack}{HTML}{FCE7F3}
+\providecolor{HypoRubricTitleText}{HTML}{831843}
+
+\makeatletter
+\newif\ifHypo@ingroupedqa
+\Hypo@ingroupedqafalse
+\@ifundefined{HypoIconTitleIndent}{%
+  \newlength{\HypoIconTitleIndent}%
+  \setlength{\HypoIconTitleIndent}{1.80em}%
+}{}%
+
+\NewDocumentCommand{\Hypo@ResolveTitle}{m m}{%
+  \ifstrempty{#1}{#2}{#1}%
+}
+
+\NewDocumentCommand{\Hypo@ResolvePrefixedTitle}{m m}{%
+  \ifstrempty{#1}{#2}{#2: #1}%
+}
+
+\NewDocumentCommand{\HypoBoxTitle}{m m}{%
+  \HypoIconTitle{#1}{#2}%
+}
+
+\tcbset{
+  hypobox/base/.style={
+    breakable,
+    enhanced,
+    arc=1mm,
+    boxrule=0.5pt,
+    left=8pt,
+    right=8pt,
+    top=7pt,
+    bottom=7pt,
+    before skip=7pt,
+    after skip=7pt
+  },
+  hypobox/subtle/.style={
+    boxrule=0.45pt,
+    leftrule=2pt
+  },
+  hypobox/marked/.style={
+    boxrule=0.6pt,
+    leftrule=2.5pt
+  },
+  hypobox/card/.style={
+    boxrule=0.75pt,
+    leftrule=3pt,
+    left=9pt,
+    right=9pt,
+    top=8pt,
+    bottom=8pt
+  },
+  hypobox/answer/.style={
+    boxrule=0.5pt,
+    leftrule=2pt
+  },
+  hypobox/rubric/.style={
+    arc=0.8mm,
+    boxrule=0.7pt
+  },
+  hypobox/question-plain/.style={
+    breakable,
+    enhanced,
+    arc=0.8mm,
+    boxrule=0.35pt,
+    leftrule=2pt,
+    left=8pt,
+    right=8pt,
+    top=5pt,
+    bottom=6pt,
+    toptitle=3pt,
+    bottomtitle=3pt,
+    before skip=5pt,
+    after skip=7pt
+  },
+  hypobox/qa/.style={
+    boxrule=0.7pt,
+    leftrule=3pt,
+    left=10pt,
+    right=10pt,
+    top=9pt,
+    bottom=9pt
+  }
+}
+
+\NewDocumentCommand{\HypoBox}{m m m m +m}{%
+  \begin{tcolorbox}[
+    hypobox/base,
+    breakable,
+    colback=#1Back,
+    colframe=#1Frame,
+    colbacktitle=#1TitleBack,
+    coltitle=#1TitleText,
+    fonttitle=\HypoSemanticTitleFont,
+    title={\HypoBoxTitle{#2}{#3}},
+    #4
+  ]
+  #5%
+  \end{tcolorbox}%
+}
+
+\NewDocumentCommand{\HypoQASection}{m m m +m}{%
+  \par\medskip
+  \noindent{\HypoSemanticTitleFont\color{#1Frame}\HypoBoxTitle{#2}{#3}\par}
+  \vspace{2pt}%
+  {\color{#1Frame}\hrule height 0.35pt}%
+  \vspace{5pt}%
+  {\leftskip=\HypoIconTitleIndent\relax #4\par}%
+}
+
+\NewDocumentCommand{\HypoTextQASection}{m m m +m}{%
+  \par\vspace{2pt}%
+  \noindent{\HypoSemanticTitleFont\color{#1Frame}\HypoBoxTitle{#2}{#3}\par}
+  \vspace{1pt}%
+  {\setlength{\parindent}{0pt}#4\par}%
+  \par\vspace{2pt}%
+}
+
+\NewDocumentCommand{\HypoSemanticStandardBox}{m m m +m}{%
+  \HypoBox{#1}{#2}{#3}{hypobox/subtle}{#4}%
+}
+
+\NewDocumentCommand{\HypoSemanticNumberedBox}{m m m +m}{%
+  \HypoBox{#1}{#2}{#3}{hypobox/card,fonttitle=\HypoQuestionTitleFont}{#4}%
+}
+
+\NewDocumentCommand{\HypoSemanticAnswerBox}{m m m +m}{%
+  \HypoBox{#1}{#2}{#3}{hypobox/answer,fonttitle=\HypoAnswerTitleFont}{#4}%
+}
+
+\NewDocumentCommand{\HypoSemanticRubricBox}{m m m +m}{%
+  \HypoBox{#1}{#2}{#3}{hypobox/rubric,fonttitle=\HypoRubricTitleFont}{#4}%
+}
+
+\NewDocumentCommand{\HypoSemanticBlock}{m +m}{%
+  \HypoSemanticStandardBox{HypoSemantic}{summary}{#1}{#2}%
+}
+
+\newcounter{HypoQuestion}
+\NewDocumentCommand{\HypoQuestionOutlineBox}{m +m}{%
+  \HypoBox{HypoQuestion}{question}{#1}{%
+    hypobox/question-plain,
+    fonttitle=\HypoQuestionTitleFont,
+    colbacktitle=HypoQuestionBack,
+    coltitle=HypoQuestionFrame%
+  }{#2}%
+}
+
+\NewDocumentCommand{\HypoQuestionTextBox}{m +m}{%
+  \HypoTextQASection{HypoQuestion}{question}{#1}{#2}%
+}
+
+\NewDocumentCommand{\HypoQuestionBox}{m m +m}{%
+  \ifHypo@ingroupedqa
+    \HypoQASection{HypoQuestion}{question}{#1}{#3}%
+  \else
+    \ifstrequal{#2}{card}{%
+      \HypoSemanticNumberedBox{HypoQuestion}{question}{#1}{#3}%
+    }{%
+      \ifstrequal{#2}{plain}{%
+        \HypoQuestionTextBox{#1}{#3}%
+      }{%
+        \HypoQuestionOutlineBox{#1}{#3}%
+      }%
+    }%
+  \fi
+}
+
+\NewDocumentEnvironment{HypoQuestion}{O{} O{} O{true} O{outline} +b}{%
+  \ifstrequal{#3}{false}{%
+    \HypoQuestionBox{\Hypo@ResolveTitle{#2}{Question}}{#4}{#5}%
+  }{%
+    \refstepcounter{HypoQuestion}%
+    \if\relax\detokenize{#1}\relax\else\label{#1}\fi
+    \ifstrequal{#4}{plain}{%
+      \HypoQuestionBox{\Hypo@ResolvePrefixedTitle{#2}{Question~\theHypoQuestion}}{#4}{#5}%
+    }{%
+      \HypoQuestionBox{\Hypo@ResolveTitle{#2}{Question~\theHypoQuestion}}{#4}{#5}%
+    }%
+  }%
+}{}
+
+\NewDocumentEnvironment{HypoQA}{O{} O{grouped} +b}{%
+  \HypoBox{HypoQuestion}{question}{\Hypo@ResolveTitle{#1}{Question Set}}{hypobox/qa,fonttitle=\HypoQuestionTitleFont}{%
+    \Hypo@ingroupedqatrue
+    #3%
+    \Hypo@ingroupedqafalse
+  }%
+}{}
+
+\NewDocumentEnvironment{HypoHint}{O{} O{} +b}{%
+  \ifHypo@ingroupedqa
+    \HypoQASection{HypoHint}{hint}{\Hypo@ResolveTitle{#1}{Hint}}{#3}%
+  \else
+    \ifstrequal{#2}{plain}{%
+      \HypoTextQASection{HypoHint}{hint}{\Hypo@ResolveTitle{#1}{Hint}}{#3}%
+    }{%
+      \HypoSemanticStandardBox{HypoHint}{hint}{\Hypo@ResolveTitle{#1}{Hint}}{#3}%
+    }%
+  \fi
+}{}
+
+\NewDocumentEnvironment{HypoSolution}{O{} O{} +b}{%
+  \HypoIfAnswerVisibleTF{%
+    \ifHypo@ingroupedqa
+      \HypoQASection{HypoSolution}{solution}{\Hypo@ResolveTitle{#1}{Solution}}{#3}%
+    \else
+      \ifstrequal{#2}{plain}{%
+        \HypoTextQASection{HypoSolution}{solution}{\Hypo@ResolveTitle{#1}{Solution}}{#3}%
+      }{%
+        \HypoSemanticAnswerBox{HypoSolution}{solution}{\Hypo@ResolveTitle{#1}{Solution}}{#3}%
+      }%
+    \fi
+  }{}%
+}{}
+
+\RenewDocumentEnvironment{HypoAnswer}{O{} O{} +b}{%
+  \HypoIfAnswerVisibleTF{%
+    \ifHypo@ingroupedqa
+      \HypoQASection{HypoAnswer}{answer}{\Hypo@ResolveTitle{#1}{Answer}}{#3}%
+    \else
+      \ifstrequal{#2}{plain}{%
+        \HypoTextQASection{HypoAnswer}{answer}{\Hypo@ResolveTitle{#1}{Answer}}{#3}%
+      }{%
+        \HypoSemanticAnswerBox{HypoAnswer}{answer}{\Hypo@ResolveTitle{#1}{Answer}}{#3}%
+      }%
+    \fi
+  }{}%
+}{}
+
+\NewDocumentEnvironment{HypoObjective}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoSemantic}{objective}{\Hypo@ResolveTitle{#1}{Objective}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoInfo}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoSemantic}{info}{\Hypo@ResolveTitle{#1}{Info}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoTask}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoSemantic}{task}{\Hypo@ResolveTitle{#1}{Task}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoRequirement}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoRequirement}{requirement}{\Hypo@ResolveTitle{#1}{Requirement}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoDeliverable}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoSemantic}{deliverable}{\Hypo@ResolveTitle{#1}{Deliverable}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoChecklist}{O{} +b}{%
+  \HypoSemanticStandardBox{HypoSemantic}{checklist}{\Hypo@ResolveTitle{#1}{Checklist}}{#2}%
+}{}
+
+\NewDocumentEnvironment{HypoRubric}{O{} +b}{%
+  \HypoSemanticRubricBox{HypoRubric}{rubric}{\Hypo@ResolveTitle{#1}{Rubric}}{#2}%
+}{}
+\makeatother

@@ -1,0 +1,3 @@
+[submodule "spec/hypodoc"]
+	path = spec/hypodoc
+	url = ../hypodoc-spec.git

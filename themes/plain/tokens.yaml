@@ -1,0 +1,17 @@
+name: plain
+kind: longform
+colors:
+  ink: "#1F2933"
+  muted: "#5B6472"
+  accent: "#0F766E"
+  note_back: "#F4F7FB"
+  note_frame: "#64748B"
+  tip_back: "#F0FDF4"
+  tip_frame: "#15803D"
+  warning_back: "#FFF7ED"
+  warning_frame: "#C2410C"
+  summary_back: "#EFF6FF"
+  summary_frame: "#1D4ED8"
+layout:
+  paper: letter
+  margin: 1in

@@ -1,0 +1,15 @@
+\HypoTableConfig{type=comparison,density=compact,width=0.96\linewidth,caption={Model capability comparison},label={tab:model-comparison},header=true,striped=true}
+---
+\HypoTableConfig{type=checklist,density=compact,width=0.86\linewidth,caption={Release checklist},label={tab:release-checklist},header=true,striped=false}
+---
+\HypoTableConfig{type=rubric,density=normal,width=0.9\linewidth,caption={Rubric-like grading table},label={tab:rubric-like},header=true,striped=true}
+---
+\HypoTableConfig{type=cheatsheet,density=compact,width=0.78\linewidth,caption={Shortcut cheat sheet},label={tab:shortcut-cheatsheet},header=true,striped=true}
+---
+Small & Fast checks & Shallow context
+---
+Red tests recorded & Test worker & Yes
+---
+Excellent & Cross-page PDF passes & 5
+---
+Ctrl+K & Command palette & 快速跳转

@@ -1,0 +1,354 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-layout}[2026/06/28 Hypo-LaTeX longform layout]
+
+\RequirePackage{geometry}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec}
+\RequirePackage{hyperref}
+\RequirePackage{eso-pic}
+
+\providecommand{\HypoPaperSize}{a4paper}
+\makeatletter
+\newcommand{\Hypo@PaperLetter}{letterpaper}
+\ifx\HypoPaperSize\Hypo@PaperLetter
+  \geometry{letterpaper, margin=1in, headheight=15pt}
+\else
+  \geometry{paperwidth=595bp, paperheight=842bp, margin=1in, headheight=15pt}
+\fi
+\makeatother
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=HypoAccent,
+  urlcolor=HypoAccent,
+  citecolor=HypoAccent,
+  pdfauthor={\HypoMetadata{author}},
+  pdftitle={\HypoMetadata{title}}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\nouppercase{\leftmark}}
+\fancyhead[RE,LO]{\HypoMetadata{title}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\makeatletter
+\@ifundefined{chapter}{%
+  \titleformat{\section}
+    {\HypoChapterTitleFont\Large\bfseries\color{HypoInk}}
+    {\color{HypoAccent}\thesection}
+    {0.8em}
+    {}
+    [\vspace{0.35ex}\titlerule]
+  \titlespacing*{\section}{0pt}{1.2em}{0.75em}
+}{%
+  \titleformat{\chapter}[display]
+    {\HypoChapterTitleFont\huge\bfseries\color{HypoInk}}
+    {\color{HypoAccent}\chaptertitlename\ \thechapter}
+    {1ex}
+    {\Huge}
+    [\vspace{0.5ex}\titlerule]
+
+  \titlespacing*{\chapter}{0pt}{0pt}{2.5em}
+}
+\makeatother
+
+\makeatletter
+\newcommand{\Hypo@DefaultCoverImage}{hypolatex-cover-classic-readable-integrated.png}
+\newcommand{\Hypo@ResolvedCoverLayout}{}
+\newcommand{\Hypo@ResolvedCoverImage}{}
+
+\newcommand{\Hypo@ResolveCoverLayout}{%
+  \HypoIfMetadataTF{cover_layout}{%
+    \edef\Hypo@ResolvedCoverLayout{\HypoMetadata{cover_layout}}%
+  }{%
+    \ifdefstring{\HypoThemeName}{classic-readable}{%
+      \def\Hypo@ResolvedCoverLayout{integrated-art}%
+    }{%
+      \def\Hypo@ResolvedCoverLayout{plain}%
+    }%
+  }%
+}
+
+\newcommand{\Hypo@ResolveCoverImage}{%
+  \HypoIfMetadataTF{cover_image}{%
+    \edef\Hypo@ResolvedCoverImage{\HypoMetadata{cover_image}}%
+  }{%
+    \def\Hypo@ResolvedCoverImage{\Hypo@DefaultCoverImage}%
+  }%
+}
+
+\newcommand{\Hypo@CoverLogoAndIcon}{%
+  \HypoIfMetadataTF{logo}{%
+    \IfFileExists{\HypoMetadata{logo}}{%
+      \includegraphics[height=2.2cm]{\HypoMetadata{logo}}\par\vspace{1.5cm}%
+    }{}%
+  }{}%
+  \HypoIfMetadataTF{icon}{%
+    {\color{HypoAccent}\fontsize{34}{38}\selectfont\HypoIcon{\HypoMetadata{icon}}\par}
+    \vspace{1.2cm}
+  }{}%
+}
+
+\newcommand{\Hypo@CoverTitleBlock}{%
+  {\HypoCoverTitleFont\Huge\bfseries\color{HypoInk}\HypoMetadata{title}\par}
+  \HypoIfMetadataTF{subtitle}{%
+    \vspace{0.6cm}
+    {\Large\color{HypoMuted}\HypoMetadata{subtitle}\par}
+  }{}%
+}
+
+\newcommand{\Hypo@CoverTitleCard}[1]{%
+  \begingroup
+    \setlength{\fboxsep}{14pt}%
+    \setlength{\fboxrule}{0.8pt}%
+    \fcolorbox{HypoAccent}{HypoNoteBack}{%
+      \begin{minipage}{#1}
+        \centering
+        {\HypoCoverTitleFont\Huge\bfseries\color{HypoInk}\HypoMetadata{title}\par}
+        \HypoIfMetadataTF{subtitle}{%
+          \vspace{0.55cm}
+          {\Large\color{HypoMuted}\HypoMetadata{subtitle}\par}
+        }{}%
+      \end{minipage}%
+    }%
+  \endgroup
+}
+
+\newcommand{\Hypo@CoverAbstractPlain}{%
+  \HypoIfMetadataTF{abstract}{%
+    \begin{minipage}{0.72\textwidth}
+      \small\color{HypoInk}
+      \noindent\HypoMetadata{abstract}
+    \end{minipage}
+    \par\vspace{1.2cm}
+  }{}%
+}
+
+\newcommand{\Hypo@CoverAbstractCard}{%
+  \HypoIfMetadataTF{abstract}{%
+    \begingroup
+      \setlength{\fboxsep}{12pt}%
+      \setlength{\fboxrule}{0.7pt}%
+      \fcolorbox{HypoAccent}{HypoNoteBack}{%
+        \begin{minipage}{0.74\textwidth}
+          \small\color{HypoInk}
+          \setlength{\parindent}{0pt}%
+          \HypoMetadata{abstract}
+        \end{minipage}%
+      }%
+    \endgroup
+    \par\vspace{0.9cm}
+  }{}%
+}
+
+\newcommand{\Hypo@CoverAuthorCard}{%
+  \begingroup
+    \setlength{\fboxsep}{8pt}%
+    \setlength{\fboxrule}{0.5pt}%
+    \fcolorbox{HypoAccent}{HypoNoteBack}{%
+      \begin{minipage}{0.42\textwidth}
+        \centering\small\color{HypoInk}
+        \HypoMetadata{author}\par
+        \HypoIfMetadataTF{organization}{%
+          \vspace{0.2cm}{\HypoMetadata{organization}\par}
+        }{}%
+        \HypoIfMetadataTF{course}{%
+          \vspace{0.15cm}{\HypoMetadata{course}\par}
+        }{}%
+        \HypoIfMetadataTF{date}{%
+          \vspace{0.35cm}{\HypoMetadata{date}\par}
+        }{}%
+      \end{minipage}%
+    }%
+  \endgroup
+}
+
+\newcommand{\Hypo@CoverAuthorBlock}{%
+  {\large\HypoMetadata{author}\par}
+  \HypoIfMetadataTF{organization}{%
+    \vspace{0.35cm}{\HypoMetadata{organization}\par}
+  }{}%
+  \HypoIfMetadataTF{course}{%
+    \vspace{0.2cm}{\HypoMetadata{course}\par}
+  }{}%
+  \vspace{0.7cm}
+  \HypoIfMetadataTF{date}{{\HypoMetadata{date}\par}}{}%
+}
+
+\newcommand{\Hypo@CoverBackground}{%
+  \Hypo@ResolveCoverImage
+  \IfFileExists{\Hypo@ResolvedCoverImage}{%
+    \AddToShipoutPictureBG*{%
+      \AtPageLowerLeft{%
+        \includegraphics[width=\paperwidth,height=\paperheight]{\Hypo@ResolvedCoverImage}%
+      }%
+    }%
+  }{}%
+}
+
+\newcommand{\Hypo@CoverInlineImage}[2]{%
+  \Hypo@ResolveCoverImage
+  \IfFileExists{\Hypo@ResolvedCoverImage}{%
+    \includegraphics[width=#1,height=#2,keepaspectratio]{\Hypo@ResolvedCoverImage}\par
+  }{}%
+}
+
+\newcommand{\Hypo@MakeDefaultCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+    \vspace*{0.08\textheight}
+    \Hypo@CoverLogoAndIcon
+    \Hypo@CoverTitleBlock
+    \vfill
+    \Hypo@CoverAbstractPlain
+    \Hypo@CoverAuthorBlock
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\Hypo@MakeClassicReadableCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \Hypo@CoverBackground
+    \centering
+    \vspace*{0.08\textheight}
+    \Hypo@CoverLogoAndIcon
+    \Hypo@CoverTitleCard{0.74\textwidth}
+    \vfill
+    \Hypo@CoverAbstractCard
+    \Hypo@CoverAuthorCard
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\Hypo@MakeIntegratedArtCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \Hypo@CoverBackground
+    \raggedright
+    \vspace*{0.11\textheight}
+    \hspace*{0.02\textwidth}%
+    \begin{minipage}{0.78\textwidth}
+      {\HypoCoverTitleFont\fontsize{48}{58}\selectfont\bfseries\color{HypoInk}\HypoMetadata{title}\par}
+      \HypoIfMetadataTF{subtitle}{%
+        \vspace{0.6cm}
+        {\fontsize{18}{26}\selectfont\color{HypoMuted}\HypoMetadata{subtitle}\par}
+      }{}%
+    \end{minipage}
+    \par\vspace{1.15cm}
+    \hspace*{0.02\textwidth}%
+    \HypoIfMetadataTF{abstract}{%
+      \begin{minipage}{0.66\textwidth}
+        \fontsize{12}{20}\selectfont\color{HypoInk}
+        \setlength{\parindent}{0pt}%
+        \HypoMetadata{abstract}
+      \end{minipage}
+    }{}%
+    \vfill
+    \begin{flushright}
+      \begin{minipage}{0.42\textwidth}
+        \raggedleft\fontsize{12}{17}\selectfont\color{HypoInk}
+        \HypoMetadata{author}\par
+        \HypoIfMetadataTF{organization}{%
+          \vspace{0.2cm}{\HypoMetadata{organization}\par}
+        }{}%
+        \HypoIfMetadataTF{course}{%
+          \vspace{0.15cm}{\HypoMetadata{course}\par}
+        }{}%
+        \HypoIfMetadataTF{date}{%
+          \vspace{0.35cm}{\HypoMetadata{date}\par}
+        }{}%
+      \end{minipage}
+    \end{flushright}
+    \vspace*{0.03\textheight}
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\Hypo@MakeTopTitleImageCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+    \vspace*{0.05\textheight}
+    \Hypo@CoverLogoAndIcon
+    \Hypo@CoverTitleBlock
+    \vspace{0.9cm}
+    \Hypo@CoverInlineImage{0.88\textwidth}{0.38\textheight}
+    \vfill
+    \Hypo@CoverAbstractCard
+    \Hypo@CoverAuthorBlock
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\Hypo@MakeInfoPanelCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \raggedright
+    \vspace*{0.05\textheight}
+    {\color{HypoAccent}\rule{0.28\textwidth}{1.4pt}\par}
+    \vspace{0.9cm}
+    {\HypoCoverTitleFont\Huge\bfseries\color{HypoInk}\HypoMetadata{title}\par}
+    \HypoIfMetadataTF{subtitle}{%
+      \vspace{0.55cm}
+      {\Large\color{HypoMuted}\HypoMetadata{subtitle}\par}
+    }{}%
+    \vspace{1.2cm}
+    \begin{minipage}{0.58\textwidth}
+      \Hypo@CoverAbstractPlain
+    \end{minipage}
+    \vfill
+    \begin{minipage}{0.72\textwidth}
+      \Hypo@CoverAuthorBlock
+    \end{minipage}
+    \vspace*{0.06\textheight}
+    {\color{HypoAccent}\rule{\textwidth}{1.6pt}\par}
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\Hypo@MakePaperInkCover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \centering
+    \vspace*{0.11\textheight}
+    {\color{HypoAccent}\rule{0.16\textwidth}{1.1pt}\par}
+    \vspace{1.2cm}
+    \Hypo@CoverTitleBlock
+    \vfill
+    \Hypo@CoverAbstractCard
+    \vspace{0.4cm}
+    \Hypo@CoverAuthorBlock
+  \end{titlepage}
+  \cleardoublepage
+}
+
+\newcommand{\HypoMakeCover}{%
+  \Hypo@ResolveCoverLayout
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{plain}{%
+    \Hypo@MakeDefaultCover
+  }{%
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{full-bleed-card}{%
+    \Hypo@MakeClassicReadableCover
+  }{%
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{integrated-art}{%
+    \Hypo@MakeIntegratedArtCover
+  }{%
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{top-title-image}{%
+    \Hypo@MakeTopTitleImageCover
+  }{%
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{info-panel}{%
+    \Hypo@MakeInfoPanelCover
+  }{%
+  \ifdefstring{\Hypo@ResolvedCoverLayout}{paper-ink}{%
+    \Hypo@MakePaperInkCover
+  }{%
+    \PackageWarning{hypolatex-layout}{Unknown cover_layout `\Hypo@ResolvedCoverLayout'; using plain}%
+    \Hypo@MakeDefaultCover
+  }}}}}}%
+}
+\makeatother

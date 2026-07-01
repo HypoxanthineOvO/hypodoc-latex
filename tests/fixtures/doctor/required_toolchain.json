@@ -1,0 +1,24 @@
+{
+  "executables": [
+    "pandoc",
+    "python3",
+    "uv",
+    "xelatex",
+    "latexmk",
+    "kpsewhich",
+    "fc-match",
+    "pdfinfo",
+    "pdftotext",
+    "pdftoppm"
+  ],
+  "tex_packages": [
+    "ctex",
+    "fontspec",
+    "fontawesome5",
+    "tcolorbox",
+    "fancyhdr",
+    "geometry",
+    "titlesec",
+    "eso-pic"
+  ]
+}

@@ -1,0 +1,51 @@
+# Python/cache artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Local scratch space
+tmp/
+
+# Private corpus lane: real documents and generated evidence stay local.
+tests/private_corpus.toml
+tests/private/
+tests/private/**
+tests/private/**/corpus/
+tests/private/**/results/
+tests/private/**/*.pdf
+tests/private/**/*.png
+tests/private/**/*.jpg
+tests/private/**/*.jpeg
+tests/private/**/*.log
+tests/private/**/*.txt
+
+# Common LaTeX byproducts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
