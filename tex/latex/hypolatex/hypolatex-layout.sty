@@ -4,6 +4,7 @@
 \RequirePackage{geometry}
 \RequirePackage{fancyhdr}
 \RequirePackage{titlesec}
+\RequirePackage{needspace}
 \RequirePackage{hyperref}
 \RequirePackage{eso-pic}
 
@@ -350,5 +351,113 @@
     \PackageWarning{hypolatex-layout}{Unknown cover_layout `\Hypo@ResolvedCoverLayout'; using plain}%
     \Hypo@MakeDefaultCover
   }}}}}}%
+}
+
+\newcommand{\Hypo@StandardDocumentStart}{%
+  \HypoMakeCover
+  \clearpage
+  \tableofcontents
+  \clearpage
+}
+
+% needspace relies on the page builder, which multicols bypasses (columns are
+% cut afterwards with \vsplit). Reserve an unbreakable empty box instead:
+% \vsplit cannot break inside a box, so if the reserved height does not fit in
+% the current column the break lands before the heading.
+\newcommand{\Hypo@ColNeedspace}[1]{%
+  \par
+  \begingroup
+    \dimen@=#1\relax
+    \vbox to \dimen@{}%
+    \nobreak
+    \kern-\dimen@
+  \endgroup
+  \nobreak
+}
+
+\newcommand{\Hypo@CheatsheetSectionMark}{%
+  {\color{HypoAccent}\rule[-0.14em]{0.5em}{0.85em}}\hspace{0.42em}%
+}
+
+\newcommand{\Hypo@CheatsheetSubsectionMark}{%
+  {\color{HypoAccent}\rule[-0.1em]{0.22em}{0.68em}}\hspace{0.38em}%
+}
+
+\newcommand{\Hypo@CheatsheetCompactPageSetup}{%
+  \newgeometry{left=0.45in,right=0.45in,top=0.45in,bottom=0.52in,headheight=0pt,headsep=0pt,footskip=14pt}%
+  \pagestyle{plain}%
+  \footnotesize
+  \setlength{\parindent}{0pt}%
+  \setlength{\parskip}{1.2pt}%
+  % Narrow multicols columns + inline math + CJK produce many overfull lines;
+  % allow looser spacing and inline-math breaks at relations/operators.
+  \emergencystretch=1.5em
+  \tolerance=2000
+  \relpenalty=300
+  \binoppenalty=500
+  \setlength{\abovedisplayskip}{2.5pt}%
+  \setlength{\belowdisplayskip}{2.5pt}%
+  \setlength{\abovedisplayshortskip}{1.5pt}%
+  \setlength{\belowdisplayshortskip}{1.5pt}%
+  \setlength{\floatsep}{4pt plus 1pt minus 1pt}%
+  \setlength{\textfloatsep}{5pt plus 1pt minus 1pt}%
+  \setlength{\intextsep}{4pt plus 1pt minus 1pt}%
+  \setlength{\abovecaptionskip}{3pt}%
+  \setlength{\belowcaptionskip}{1pt}%
+  \titleformat{\section}
+    {\HypoChapterTitleFont\small\bfseries\color{HypoInk}}
+    {\color{HypoAccent}\thesection}
+    {0.4em}
+    {\Hypo@CheatsheetSectionMark}
+    [\vspace{0.12ex}{\color{HypoAccent}\titlerule[0.5pt]}]%
+  \titlespacing*{\section}{0pt}{0.55em}{0.3em}%
+  \titleformat{\subsection}
+    {\HypoTitleFont\footnotesize\bfseries\color{HypoInk}}
+    {\color{HypoAccent}\thesubsection}
+    {0.35em}
+    {\Hypo@CheatsheetSubsectionMark}%
+  \titlespacing*{\subsection}{0pt}{0.42em}{0.18em}%
+  \titleformat{\subsubsection}
+    {\HypoTitleFont\scriptsize\bfseries\color{HypoInk}}
+    {\color{HypoAccent}\thesubsubsection}
+    {0.3em}
+    {}%
+  \titlespacing*{\subsubsection}{0pt}{0.35em}{0.12em}%
+  \pretocmd{\section}{\Hypo@ColNeedspace{6\baselineskip}}{}{}%
+  \pretocmd{\subsection}{\Hypo@ColNeedspace{4\baselineskip}}{}{}%
+}
+
+\newcommand{\Hypo@CheatsheetDocumentStart}{%
+  \Hypo@CheatsheetCompactPageSetup
+  \@ifundefined{HypoCheatsheetCompactListSetup}{}{\HypoCheatsheetCompactListSetup}%
+  \begingroup
+    \thispagestyle{plain}%
+    \setlength{\parindent}{0pt}%
+    \HypoIfMetadataTF{title}{%
+      {\HypoCoverTitleFont\Large\bfseries\color{HypoInk}\HypoMetadata{title}\par}%
+      \HypoIfMetadataTF{subtitle}{%
+        \vspace{0.12em}{\normalsize\color{HypoMuted}\HypoMetadata{subtitle}\par}%
+      }{}%
+      \HypoIfMetadataTF{author}{%
+        \vspace{0.18em}{\footnotesize\color{HypoMuted}\HypoMetadata{author}\par}%
+      }{}%
+      \vspace{0.35em}%
+      {\color{HypoAccent}\hrule height 0.6pt}%
+      \vspace{0.45em}%
+    }{}%
+  \endgroup
+}
+
+\newcommand{\HypoDocumentStart}{%
+  \ifdefstring{\Hypo@metadata@layout}{standard}{%
+    \Hypo@StandardDocumentStart
+  }{%
+    \ifdefstring{\Hypo@metadata@layout}{cheatsheet}{%
+      \Hypo@CheatsheetDocumentStart
+    }{%
+      \PackageError{hypolatex-layout}{Unknown layout `\Hypo@metadata@layout'}{Supported layouts: standard, cheatsheet.}%
+      \Hypo@StandardDocumentStart
+    }%
+  }%
 }
 \makeatother

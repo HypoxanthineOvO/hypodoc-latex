@@ -352,6 +352,58 @@ Real artifacts and results are local only: do not commit real source excerpts, g
 
 For a docs-side version of this contract, see `docs/c3-authoring.md`.
 
+## C5 hd:make-cheatsheet Skill Command
+
+`hd:make-cheatsheet` is an AI-facing Skill Command / Skill workflow for turning
+a source material set into a new compact cheatsheet Markdown document. It is
+not a CLI, not a subcommand, and not a `hypolatex` CLI subcommand. Keep this
+boundary explicit when documenting or invoking it: the workflow guides AI
+authoring and review, while deterministic PDF generation still uses the
+existing public build path.
+
+The deterministic build path still calls:
+
+```bash
+hypolatex build INPUT.md --output OUTPUT.pdf
+```
+
+Do not add a distill subcommand. There is no deterministic extraction CLI, and
+the workflow should not be presented as a new CLI surface. The AI reads source
+material, source document, or input document content as read-only context:
+preserve it unchanged, do not modify it in place, and generate a new cheatsheet
+Markdown file for the output.
+
+Use these output choices to decide what the new cheatsheet should emphasize:
+
+- `formulas`: equations, transformations, invariants, and notation that must
+  remain exact.
+- `keypoints`: definitions, constraints, caveats, checklists, and high-value
+  conceptual reminders.
+- `examples`: short worked examples, usage snippets, and sample decisions that
+  fit after the higher-priority material.
+
+`target pages` is a hard constraint. If the generated cheatsheet cannot fit the
+requested target pages without dropping mandatory content, stop and report the
+conflict instead of silently expanding the document. Compression priority is
+`formulas > keypoints > examples`: keep formulas first, compress or merge
+keypoints next, and omit examples first when space is tight.
+
+When target pages cannot be satisfied, write a conflict report with these
+fields:
+
+- `target pages`: requested page count.
+- `actual pages`: current generated page count.
+- `blocking keep/high-priority cells`: kept cells or high-priority cells that
+  prevent further compression.
+- `omitted candidates`: lower-priority examples or keypoints that were already
+  dropped or could be dropped with user approval.
+- `suggested user action`: ask the user to raise target pages, allow dropping
+  specific keep/high-priority cells, or narrow the requested output choices.
+
+Private-data policy: source material stays local and not committed. Real
+generated artifacts also stay local and not committed. Commit only public-safe
+templates, docs, fixtures, or synthetic examples.
+
 ## PDF Evidence
 
 After `hypolatex build`, verify the produced PDF rather than assuming success from the exit code alone.

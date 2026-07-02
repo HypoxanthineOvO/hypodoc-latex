@@ -13,14 +13,12 @@ $endif$$if(logo)$\HypoSetMetadata{logo}{$logo$}
 $endif$$if(icon)$\HypoSetMetadata{icon}{$icon$}
 $endif$$if(abstract)$\HypoSetMetadata{abstract}{$abstract$}
 $endif$$if(theme)$\HypoSetMetadata{theme}{$theme$}
+$endif$$if(layout)$\HypoSetMetadata{layout}{$layout$}
 $endif$$if(cover_layout)$\HypoSetMetadata{cover_layout}{$cover_layout$}
 $endif$$if(cover_image)$\HypoSetMetadata{cover_image}{$cover_image$}
 $endif$
 \begin{document}
-\HypoMakeCover
-\clearpage
-\tableofcontents
-\clearpage
+\HypoDocumentStart
 
 $body$
 \end{document}

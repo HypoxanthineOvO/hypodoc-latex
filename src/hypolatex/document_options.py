@@ -16,11 +16,14 @@ DEFAULT_ANSWER_MODE = "student"
 SUPPORTED_ANSWER_MODES = ("student", "review", "teacher")
 DEFAULT_DOCUMENT_TYPE = "book"
 SUPPORTED_DOCUMENT_TYPES = ("book", "article")
+DEFAULT_LAYOUT = "standard"
+SUPPORTED_LAYOUTS = ("standard", "cheatsheet")
 
 _ANSWER_MODE_LINE_RE = re.compile(r"^answer_mode\s*:\s*(?P<value>.*?)\s*$")
 _DOCUMENT_TYPE_LINE_RE = re.compile(
     r"^(?:document_type|documentclass)\s*:\s*(?P<value>.*?)\s*$"
 )
+_LAYOUT_LINE_RE = re.compile(r"^layout\s*:\s*(?P<value>.*?)\s*$")
 
 
 @dataclass(frozen=True)
@@ -34,20 +37,24 @@ class DocumentOptions(Mapping[str, str]):
 
     answer_mode: str = DEFAULT_ANSWER_MODE
     document_type: str = DEFAULT_DOCUMENT_TYPE
+    layout: str = DEFAULT_LAYOUT
 
     def __getitem__(self, key: str) -> str:
         if key == "answer_mode":
             return self.answer_mode
         if key == "document_type":
             return self.document_type
+        if key == "layout":
+            return self.layout
         raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
         yield "answer_mode"
         yield "document_type"
+        yield "layout"
 
     def __len__(self) -> int:
-        return 2
+        return 3
 
 
 def valid_answer_modes() -> tuple[str, ...]:
@@ -60,6 +67,12 @@ def valid_document_types() -> tuple[str, ...]:
     """Return supported document shape presets."""
 
     return SUPPORTED_DOCUMENT_TYPES
+
+
+def valid_layouts() -> tuple[str, ...]:
+    """Return supported document startup layouts."""
+
+    return SUPPORTED_LAYOUTS
 
 
 def validate_answer_mode(answer_mode: str) -> str:
@@ -97,6 +110,19 @@ def validate_document_type(document_type: str) -> str:
     )
 
 
+def validate_layout(layout: str) -> str:
+    """Normalize and validate the document startup layout."""
+
+    normalized = layout.strip().lower()
+    if normalized in SUPPORTED_LAYOUTS:
+        return normalized
+
+    supported = ", ".join(SUPPORTED_LAYOUTS)
+    raise DocumentOptionsError(
+        f"Unsupported layout: {layout!r}. Use one of: {supported}."
+    )
+
+
 def resolve_document_options(
     input_path: Path | str,
     answer_mode: str | None = None,
@@ -104,21 +130,27 @@ def resolve_document_options(
     """Resolve document options from CLI overrides and YAML frontmatter."""
 
     source = Path(input_path).expanduser().resolve()
+    frontmatter_document_type = _read_frontmatter_document_type(source)
+    frontmatter_layout = _read_frontmatter_layout(source)
 
     if answer_mode is not None:
-        frontmatter_document_type = _read_frontmatter_document_type(source)
         document_type = (
             DEFAULT_DOCUMENT_TYPE
             if frontmatter_document_type is None
             else validate_document_type(frontmatter_document_type)
         )
+        layout = (
+            DEFAULT_LAYOUT
+            if frontmatter_layout is None
+            else validate_layout(frontmatter_layout)
+        )
         return DocumentOptions(
             answer_mode=validate_answer_mode(answer_mode),
             document_type=document_type,
+            layout=layout,
         )
 
     frontmatter_answer_mode = _read_frontmatter_answer_mode(source)
-    frontmatter_document_type = _read_frontmatter_document_type(source)
 
     return DocumentOptions(
         answer_mode=(
@@ -131,6 +163,11 @@ def resolve_document_options(
             if frontmatter_document_type is None
             else validate_document_type(frontmatter_document_type)
         ),
+        layout=(
+            DEFAULT_LAYOUT
+            if frontmatter_layout is None
+            else validate_layout(frontmatter_layout)
+        ),
     )
 
 
@@ -140,6 +177,10 @@ def _read_frontmatter_answer_mode(path: Path) -> str | None:
 
 def _read_frontmatter_document_type(path: Path) -> str | None:
     return _read_frontmatter_scalar(path, _DOCUMENT_TYPE_LINE_RE)
+
+
+def _read_frontmatter_layout(path: Path) -> str | None:
+    return _read_frontmatter_scalar(path, _LAYOUT_LINE_RE)
 
 
 def _read_frontmatter_scalar(path: Path, pattern: re.Pattern[str]) -> str | None:

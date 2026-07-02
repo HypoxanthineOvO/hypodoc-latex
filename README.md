@@ -165,6 +165,7 @@ theme: classic-readable
 - 图片说明：`docs/figures.md`
 - 字体说明：`docs/fonts.md`
 - 封面布局：`docs/cover-layouts.md`
+- Cheatsheet 布局：`docs/c5-cheatsheet.md`
 
 ## 当前限制
 

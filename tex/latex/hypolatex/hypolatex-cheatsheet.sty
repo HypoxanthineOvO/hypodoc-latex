@@ -1,0 +1,240 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-cheatsheet}[2026/07/01 Hypo-LaTeX cheatsheet grid environments]
+
+\RequirePackage{etoolbox}
+\RequirePackage{xparse}
+\RequirePackage{xcolor}
+\RequirePackage{enumitem}
+\RequirePackage{multicol}
+\RequirePackage{pgfkeys}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{breakable,skins,raster}
+
+\providecommand{\HypoTitleFont}{\sffamily}
+\providecommand{\HypoSemanticTitleFont}{\HypoTitleFont\bfseries}
+\providecommand{\HypoMetadata}[1]{}
+
+\providecolor{HypoInk}{HTML}{1F2933}
+\providecolor{HypoMuted}{HTML}{64748B}
+\providecolor{HypoSemanticBack}{HTML}{F8FAFC}
+\providecolor{HypoSemanticFrame}{HTML}{94A3B8}
+\providecolor{HypoSemanticTitleBack}{HTML}{E2E8F0}
+\providecolor{HypoSemanticTitleText}{HTML}{1F2933}
+\providecolor{HypoQuestionBack}{HTML}{EFF6FF}
+\providecolor{HypoQuestionFrame}{HTML}{2563EB}
+\providecolor{HypoQuestionTitleBack}{HTML}{DBEAFE}
+\providecolor{HypoQuestionTitleText}{HTML}{1E3A8A}
+\providecolor{HypoRequirementBack}{HTML}{FFF7ED}
+\providecolor{HypoRequirementFrame}{HTML}{EA580C}
+\providecolor{HypoRequirementTitleBack}{HTML}{FED7AA}
+\providecolor{HypoRequirementTitleText}{HTML}{7C2D12}
+
+\makeatletter
+\providecommand{\Hypo@metadata@layout}{standard}
+
+\newlength{\HypoCheatsheetGap}
+\newcommand{\Hypo@cheatsheet@grid@columns}{2}
+\newcommand{\Hypo@cheatsheet@grid@gap}{normal}
+\newcommand{\Hypo@cheatsheet@cell@type}{concept}
+\newcommand{\Hypo@cheatsheet@cell@title}{}
+\newcommand{\Hypo@cheatsheet@cell@priority}{normal}
+\newcommand{\Hypo@cheatsheet@cell@span}{1}
+\newcommand{\Hypo@cheatsheet@cell@keep}{false}
+\newcommand{\Hypo@cheatsheet@cell@back}{HypoSemanticBack}
+\newcommand{\Hypo@cheatsheet@cell@frame}{HypoSemanticFrame}
+\newcommand{\Hypo@cheatsheet@cell@titleback}{HypoSemanticTitleBack}
+\newcommand{\Hypo@cheatsheet@cell@titletext}{HypoSemanticTitleText}
+
+\newcommand{\HypoCheatsheetCompactListSetup}{%
+  \setlist[itemize]{%
+    leftmargin=1.05em,
+    labelsep=0.32em,
+    itemsep=0.5pt,
+    topsep=1pt,
+    parsep=0pt,
+    partopsep=0pt
+  }%
+  \setlist[enumerate]{%
+    leftmargin=1.35em,
+    labelsep=0.35em,
+    itemsep=0.5pt,
+    topsep=1pt,
+    parsep=0pt,
+    partopsep=0pt
+  }%
+  \renewcommand{\tightlist}{%
+    \setlength{\itemsep}{0.5pt}%
+    \setlength{\parskip}{0pt}%
+    \setlength{\parsep}{0pt}%
+  }%
+}
+
+\pgfkeys{
+  /hypo/cheatsheet/grid/.is family,
+  /hypo/cheatsheet/grid,
+  columns/.store in=\Hypo@cheatsheet@grid@columns,
+  gap/.store in=\Hypo@cheatsheet@grid@gap,
+  /hypo/cheatsheet/cell/.is family,
+  /hypo/cheatsheet/cell,
+  type/.store in=\Hypo@cheatsheet@cell@type,
+  title/.store in=\Hypo@cheatsheet@cell@title,
+  priority/.store in=\Hypo@cheatsheet@cell@priority,
+  span/.store in=\Hypo@cheatsheet@cell@span,
+  keep/.store in=\Hypo@cheatsheet@cell@keep
+}
+
+\newcommand{\Hypo@CheatsheetGridDefaults}{%
+  \renewcommand{\Hypo@cheatsheet@grid@columns}{2}%
+  \renewcommand{\Hypo@cheatsheet@grid@gap}{normal}%
+  \setlength{\HypoCheatsheetGap}{6pt}%
+}
+
+\newcommand{\Hypo@CheatsheetCellDefaults}{%
+  \renewcommand{\Hypo@cheatsheet@cell@type}{concept}%
+  \renewcommand{\Hypo@cheatsheet@cell@title}{}%
+  \renewcommand{\Hypo@cheatsheet@cell@priority}{normal}%
+  \renewcommand{\Hypo@cheatsheet@cell@span}{1}%
+  \renewcommand{\Hypo@cheatsheet@cell@keep}{false}%
+  \renewcommand{\Hypo@cheatsheet@cell@back}{HypoSemanticBack}%
+  \renewcommand{\Hypo@cheatsheet@cell@frame}{HypoSemanticFrame}%
+  \renewcommand{\Hypo@cheatsheet@cell@titleback}{HypoSemanticTitleBack}%
+  \renewcommand{\Hypo@cheatsheet@cell@titletext}{HypoSemanticTitleText}%
+}
+
+\newcommand{\Hypo@CheatsheetResolveGap}{%
+  \ifstrequal{\Hypo@cheatsheet@grid@gap}{compact}{%
+    \setlength{\HypoCheatsheetGap}{2pt}%
+  }{%
+    \ifstrequal{\Hypo@cheatsheet@grid@gap}{relaxed}{%
+      \setlength{\HypoCheatsheetGap}{10pt}%
+    }{%
+      \setlength{\HypoCheatsheetGap}{6pt}%
+    }%
+  }%
+}
+
+\newcommand{\Hypo@CheatsheetResolveCellColors}{%
+  \ifstrequal{\Hypo@cheatsheet@cell@priority}{high}{%
+    \renewcommand{\Hypo@cheatsheet@cell@back}{HypoRequirementBack}%
+    \renewcommand{\Hypo@cheatsheet@cell@frame}{HypoRequirementFrame}%
+    \renewcommand{\Hypo@cheatsheet@cell@titleback}{HypoRequirementTitleBack}%
+    \renewcommand{\Hypo@cheatsheet@cell@titletext}{HypoRequirementTitleText}%
+  }{%
+    \ifstrequal{\Hypo@cheatsheet@cell@priority}{medium}{%
+      \renewcommand{\Hypo@cheatsheet@cell@back}{HypoQuestionBack}%
+      \renewcommand{\Hypo@cheatsheet@cell@frame}{HypoQuestionFrame}%
+      \renewcommand{\Hypo@cheatsheet@cell@titleback}{HypoQuestionTitleBack}%
+      \renewcommand{\Hypo@cheatsheet@cell@titletext}{HypoQuestionTitleText}%
+    }{}%
+  }%
+}
+
+\NewDocumentCommand{\Hypo@CheatsheetCellTitle}{}{%
+  \ifstrempty{\Hypo@cheatsheet@cell@title}{%
+    \Hypo@cheatsheet@cell@type
+  }{%
+    \Hypo@cheatsheet@cell@title
+  }%
+}
+
+% In cheatsheet layout a cell is a small callout box (e.g. reminders,
+% pitfalls, margin notes), not a structural container: flowing body text
+% stays outside boxes so multicols can break columns naturally.
+\NewDocumentCommand{\Hypo@CheatsheetRasterCell}{+m}{%
+  \begin{tcolorbox}[
+    enhanced,
+    colback=\Hypo@cheatsheet@cell@back,
+    colframe=\Hypo@cheatsheet@cell@frame,
+    fontupper=\scriptsize,
+    before upper={%
+      \setlength{\parskip}{0.5pt}%
+      \setlength{\abovedisplayskip}{1.5pt}%
+      \setlength{\belowdisplayskip}{1.5pt}%
+      \setlength{\abovedisplayshortskip}{1pt}%
+      \setlength{\belowdisplayshortskip}{1pt}%
+    },
+    arc=0.8mm,
+    boxrule=0.4pt,
+    leftrule=1.6pt,
+    left=3pt,
+    right=3pt,
+    top=1.6pt,
+    bottom=1.6pt,
+    before skip=2.5pt,
+    after skip=2.5pt
+  ]
+  {\HypoSemanticTitleFont\scriptsize\color{\Hypo@cheatsheet@cell@titletext}\Hypo@CheatsheetCellTitle}\par\nobreak
+  \vspace{0.5pt}%
+  #1%
+  \end{tcolorbox}%
+}
+
+\NewDocumentCommand{\Hypo@CheatsheetFlowCell}{m +m}{%
+  \begin{tcolorbox}[
+    enhanced,
+    #1,
+    colback=\Hypo@cheatsheet@cell@back,
+    colframe=\Hypo@cheatsheet@cell@frame,
+    colbacktitle=\Hypo@cheatsheet@cell@titleback,
+    coltitle=\Hypo@cheatsheet@cell@titletext,
+    fonttitle=\HypoSemanticTitleFont,
+    title={\Hypo@CheatsheetCellTitle},
+    arc=1mm,
+    boxrule=0.45pt,
+    leftrule=2pt,
+    left=8pt,
+    right=8pt,
+    top=6pt,
+    bottom=6pt,
+    before skip=6pt,
+    after skip=7pt
+  ]
+  #2%
+  \end{tcolorbox}%
+}
+
+\NewDocumentEnvironment{HypoCheatsheetGrid}{O{} +b}{%
+  \Hypo@CheatsheetGridDefaults
+  \pgfkeys{/hypo/cheatsheet/grid,#1}%
+  \Hypo@CheatsheetResolveGap
+  \ifdefstring{\Hypo@metadata@layout}{cheatsheet}{%
+    \par\smallskip
+    \begingroup
+      \setlength{\columnsep}{\HypoCheatsheetGap}%
+      \setlength{\multicolsep}{0pt}%
+      \raggedcolumns
+      \begin{multicols}{\Hypo@cheatsheet@grid@columns}
+      \scriptsize
+      \setlength{\abovedisplayskip}{2pt}%
+      \setlength{\belowdisplayskip}{2pt}%
+      \setlength{\abovedisplayshortskip}{1pt}%
+      \setlength{\belowdisplayshortskip}{1pt}%
+      #2%
+      \end{multicols}%
+    \endgroup
+    \smallskip
+  }{%
+    \par\smallskip
+    \begingroup
+      \setlength{\parindent}{0pt}%
+      #2%
+    \endgroup
+    \smallskip
+  }%
+}{}
+
+\NewDocumentEnvironment{HypoCheatsheetCell}{O{} +b}{%
+  \Hypo@CheatsheetCellDefaults
+  \pgfkeys{/hypo/cheatsheet/cell,#1}%
+  \Hypo@CheatsheetResolveCellColors
+  \ifdefstring{\Hypo@metadata@layout}{cheatsheet}{%
+    \Hypo@CheatsheetRasterCell{#2}%
+  }{%
+    \ifstrequal{\Hypo@cheatsheet@cell@keep}{true}{%
+      \Hypo@CheatsheetFlowCell{}{#2}%
+    }{%
+      \Hypo@CheatsheetFlowCell{breakable}{#2}%
+    }%
+  }%
+}{}
+\makeatother

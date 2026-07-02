@@ -3,9 +3,16 @@ from __future__ import annotations
 import base64
 import importlib
 from collections.abc import Mapping
+from pathlib import Path
 
 import pytest
 
+
+TEST_ROOT = Path(__file__).parent
+M3_PRINTABLE_CHEATSHEET_FIXTURE = (
+    TEST_ROOT / "fixtures" / "m3" / "printable-cheatsheet.md"
+)
+MIN_RENDERED_PNG_BYTES = 1024
 
 SAMPLE_PDF_B64 = (
     "JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMg"
@@ -80,4 +87,38 @@ def test_pdf_evidence_renders_non_empty_png_screenshot(sample_pdf, tmp_path):
     assert screenshot_path.suffix == ".png"
     assert screenshot_path.is_file()
     assert screenshot_path.stat().st_size > 0
+    assert screenshot_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_pdf_evidence_renders_m3_printable_cheatsheet_first_page_png(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    pdf_evidence = _pdf_evidence_module()
+    pdf_path = tmp_path / "printable-cheatsheet.pdf"
+    screenshot_dir = tmp_path / "screenshots"
+
+    result = runner.invoke(
+        cli_app,
+        [
+            "build",
+            str(M3_PRINTABLE_CHEATSHEET_FIXTURE),
+            "--output",
+            str(pdf_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert pdf_path.is_file()
+    screenshot_path = pdf_evidence.render_page_png(
+        pdf_path,
+        output_dir=screenshot_dir,
+        page=1,
+        stem="printable-cheatsheet-page-1",
+    )
+
+    assert screenshot_path.suffix == ".png"
+    assert screenshot_path.is_file()
+    assert screenshot_path.stat().st_size > MIN_RENDERED_PNG_BYTES
     assert screenshot_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")

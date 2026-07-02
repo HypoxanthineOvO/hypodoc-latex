@@ -53,6 +53,9 @@ def test_document_options_defaults_answer_mode_to_student(tmp_path):
 
     assert _option_value(options, "answer_mode") == "student"
     assert _option_value(options, "document_type") == "book"
+    assert _option_value(options, "layout") == "standard"
+    if isinstance(options, Mapping):
+        assert dict(options)["layout"] == "standard"
 
 
 def test_document_options_reads_frontmatter_answer_mode(tmp_path):
@@ -81,6 +84,30 @@ def test_document_options_reads_frontmatter_document_type(tmp_path):
     options = _resolve(module, input_path)
 
     assert _option_value(options, "document_type") == "article"
+
+
+def test_document_options_reads_frontmatter_layout_without_changing_document_type(
+    tmp_path,
+):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / "cheatsheet-article.md",
+        """
+        document_type: article
+        layout: cheatsheet
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "document_type") == "article"
+    assert _option_value(options, "layout") == "cheatsheet"
+    if isinstance(options, Mapping):
+        assert dict(options) == {
+            "answer_mode": "student",
+            "document_type": "article",
+            "layout": "cheatsheet",
+        }
 
 
 def test_document_options_accepts_documentclass_alias(tmp_path):
@@ -150,3 +177,23 @@ def test_document_options_rejects_invalid_document_type_with_supported_values(tm
     assert "poster" in diagnostic
     for supported_type in ("book", "article"):
         assert supported_type in diagnostic
+
+
+def test_document_options_rejects_invalid_layout_with_supported_values(tmp_path):
+    module = _document_options_module()
+    error_type = getattr(module, "DocumentOptionsError", ValueError)
+    input_path = _write_markdown(
+        tmp_path / "invalid-layout.md",
+        """
+        layout: slide-deck
+        """,
+    )
+
+    with pytest.raises(error_type) as excinfo:
+        _resolve(module, input_path)
+
+    diagnostic = str(excinfo.value).lower()
+    assert "layout" in diagnostic
+    assert "slide-deck" in diagnostic
+    for supported_layout in ("standard", "cheatsheet"):
+        assert supported_layout in diagnostic

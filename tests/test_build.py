@@ -10,6 +10,8 @@ TEST_ROOT = Path(__file__).parent
 FIXTURE_ROOT = TEST_ROOT / "fixtures"
 MIN_PDF_BYTES = 1024
 M2_BILINGUAL_FIXTURE = FIXTURE_ROOT / "m2" / "bilingual-a4.md"
+M2_CHEATSHEET_GRID_FIXTURE = FIXTURE_ROOT / "m2" / "cheatsheet-grid-build.md"
+M3_PRINTABLE_CHEATSHEET_FIXTURE = FIXTURE_ROOT / "m3" / "printable-cheatsheet.md"
 ANSWER_MODE_FIXTURE = FIXTURE_ROOT / "semantics" / "answer-mode.md"
 SEMANTIC_PROJECT_FIXTURE = FIXTURE_ROOT / "semantics" / "project-brief.md"
 
@@ -69,6 +71,13 @@ def _run_pdfinfo(pdf_path):
     )
     assert result.returncode == 0, result.stderr
     return result.stdout
+
+
+def _pdf_pages(pdf_path):
+    pdfinfo_output = _run_pdfinfo(pdf_path)
+    match = re.search(r"^Pages:\s+(\d+)\s*$", pdfinfo_output, re.MULTILINE)
+    assert match is not None, pdfinfo_output
+    return int(match.group(1))
 
 
 def _extract_pdf_text(pdf_path):
@@ -222,6 +231,57 @@ def test_build_semantic_project_brief_extracts_semantic_pdf_text(
     pdf_text = _extract_pdf_text(output_path)
     for expected_text in ("目标", "交付物", "硬性要求", "验收标准", "项目"):
         assert expected_text in pdf_text
+
+
+def test_build_cheatsheet_grid_fixture_extracts_cell_content_from_pdf(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    output_path = tmp_path / "cheatsheet-grid-build.pdf"
+
+    result = _invoke_build(runner, cli_app, M2_CHEATSHEET_GRID_FIXTURE, output_path)
+
+    assert result.exit_code == 0, result.output
+    _assert_non_empty_pdf(output_path)
+    pdf_text = _normalize_pdf_text(_extract_pdf_text(output_path))
+    for expected_text in (
+        "Derivative Rules",
+        "Power rule",
+        "Build Loop",
+        "hypolatex build",
+    ):
+        assert expected_text in pdf_text
+
+
+def test_build_m3_printable_cheatsheet_pdf_has_bounded_pages_and_text_evidence(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    output_path = tmp_path / "printable-cheatsheet.pdf"
+
+    result = _invoke_build(
+        runner,
+        cli_app,
+        M3_PRINTABLE_CHEATSHEET_FIXTURE,
+        output_path,
+    )
+
+    assert result.exit_code == 0, result.output
+    _assert_non_empty_pdf(output_path)
+
+    pdf_text = _normalize_pdf_text(_extract_pdf_text(output_path))
+    for expected_text in (
+        "Printable Cheatsheet",
+        "Derivative Rules",
+        "Model Checklist",
+        "Dense Table Evidence",
+        "hypolatex build",
+    ):
+        assert expected_text in pdf_text
+
+    assert 1 <= _pdf_pages(output_path) <= 4
 
 
 def test_build_rejects_conversion_errors_with_actionable_diagnostic(

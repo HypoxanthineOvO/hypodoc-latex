@@ -2,6 +2,7 @@
 \ProvidesPackage{hypolatex-core}[2026/06/28 Hypo-LaTeX core semantics]
 
 \RequirePackage{etoolbox}
+\RequirePackage{amsmath}
 \RequirePackage{graphicx}
 \RequirePackage{calc}
 \RequirePackage{longtable}
@@ -108,6 +109,10 @@
 }
 
 \makeatletter
+% An `on line' tcbox cannot break across lines. Long inline code (common in
+% narrow cheatsheet columns) would overflow the line, so fall back to plain
+% accent-colored breakable text whenever the boxed content would eat most of
+% the current line width.
 \AtBeginDocument{%
   \let\Hypo@OriginalTexttt\texttt
   \newtcbox{\HypoInlineCode}{%
@@ -125,8 +130,20 @@
     boxsep=0pt,
     tcbox raise base
   }%
+  \newcommand{\Hypo@BreakableInlineCode}[1]{%
+    {\color{HypoAccent}\ttfamily #1}%
+  }%
   \RenewDocumentCommand{\texttt}{m}{%
-    \HypoInlineCode{\Hypo@OriginalTexttt{#1}}%
+    \begingroup
+      % Measure with plain \ttfamily: the robust \texttt internals
+      % (\check@icl lookahead) break inside \sbox.
+      \sbox\z@{\ttfamily #1}%
+      \ifdim\wd\z@>0.6\linewidth
+        \Hypo@BreakableInlineCode{#1}%
+      \else
+        \HypoInlineCode{\Hypo@OriginalTexttt{#1}}%
+      \fi
+    \endgroup
   }%
 }
 \makeatother
@@ -143,6 +160,7 @@
 \newcommand{\Hypo@metadata@icon}{}
 \newcommand{\Hypo@metadata@abstract}{}
 \newcommand{\Hypo@metadata@theme}{}
+\newcommand{\Hypo@metadata@layout}{standard}
 \csdef{Hypo@metadata@cover_layout}{}
 \csdef{Hypo@metadata@cover_image}{}
 \newcommand{\Hypo@answer@mode}{student}

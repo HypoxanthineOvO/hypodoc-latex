@@ -1,0 +1,15 @@
+\HypoSetMetadata{layout}{cheatsheet}
+---
+\begin{HypoCheatsheetGrid}[columns=3,gap=compact]
+---
+\begin{HypoCheatsheetCell}[type=formula,title={Derivative Rules},priority=high,span=1,keep=true]
+---
+\HypoTableConfig{type=cheatsheet,density=compact,width=0.92\linewidth,caption={Dense Table Evidence},label={tab:dense-table-evidence},header=true,striped=true}
+---
+colspec={X[1,l]X[1,l]X[1,l]}
+---
+rowsep=
+---
+\texttt{hypolatex build} & Compile public sample & page count 2-4
+---
+\begin{HypoCheatsheetCell}[type=concept,title={Chinese Marker},priority=normal,span=1,keep=false]

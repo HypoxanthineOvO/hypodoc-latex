@@ -8,7 +8,9 @@ FIXTURE_ROOT = TEST_ROOT / "fixtures"
 CONVERT_SNAPSHOT_ROOT = TEST_ROOT / "snapshots" / "convert"
 TEX_PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "tex" / "latex" / "hypolatex"
 CORE_FILE = TEX_PACKAGE_ROOT / "hypolatex-core.sty"
+LAYOUT_FILE = TEX_PACKAGE_ROOT / "hypolatex-layout.sty"
 ANSWER_MODE_FIXTURE = FIXTURE_ROOT / "semantics" / "answer-mode.md"
+CHEATSHEET_LAYOUT_FIXTURE = FIXTURE_ROOT / "m1" / "cheatsheet-layout.md"
 
 
 CONVERSION_SNAPSHOT_CASES = (
@@ -31,6 +33,11 @@ CONVERSION_SNAPSHOT_CASES = (
         "bilingual/bilingual.md",
         "bilingual-bilingual.tex",
         id="bilingual-text",
+    ),
+    pytest.param(
+        "m1/cheatsheet-layout.md",
+        "m1-cheatsheet-layout.tex",
+        id="cheatsheet-layout",
     ),
 )
 
@@ -98,6 +105,25 @@ def test_convert_emits_default_student_answer_mode_without_losing_theme_metadata
     assert "\\begin{HypoNote}" in tex
 
 
+def test_convert_standard_layout_uses_layout_metadata_and_document_start(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    input_path = FIXTURE_ROOT / "longform" / "tutorial.md"
+    output_path = tmp_path / "standard-layout.tex"
+
+    result = _invoke_convert(runner, cli_app, input_path, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    assert "\\documentclass{book}" in tex
+    assert "\\HypoSetMetadata{layout}{standard}" in tex
+    assert "\\HypoDocumentStart" in tex
+    assert "\\chapter{Orientation}" in tex
+    assert "\\HypoMakeCover\n\\clearpage\n\\tableofcontents\n\\clearpage" not in tex
+
+
 def test_convert_article_document_type_uses_article_sections(
     runner,
     cli_app,
@@ -129,6 +155,68 @@ Run `hypolatex doctor`.
     assert "\\section{Short Manual}" in tex
     assert "\\subsection{Setup}" in tex
     assert "\\chapter{" not in tex
+
+
+def test_convert_cheatsheet_layout_keeps_article_document_type_and_startup_contract(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    output_path = tmp_path / "cheatsheet-layout.tex"
+
+    result = _invoke_convert(runner, cli_app, CHEATSHEET_LAYOUT_FIXTURE, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    assert "\\documentclass{article}" in tex
+    assert "\\HypoSetMetadata{layout}{cheatsheet}" in tex
+    assert "\\HypoDocumentStart" in tex
+    assert "\\section{Quick Operator Cheatsheet}" in tex
+    assert "\\subsection{Build}" in tex
+    assert "\\chapter{" not in tex
+    assert "\\HypoMakeCover\n\\clearpage\n\\tableofcontents\n\\clearpage" not in tex
+
+
+def test_convert_rejects_invalid_layout_with_supported_values(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    input_path = tmp_path / "invalid-layout.md"
+    input_path.write_text(
+        """---
+title: Invalid Layout
+layout: slide-deck
+---
+
+# Invalid Layout
+""",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "invalid-layout.tex"
+
+    result = _invoke_convert(runner, cli_app, input_path, output_path)
+
+    assert result.exit_code != 0
+    assert not output_path.exists()
+    diagnostic = f"{result.output}\n{result.exception or ''}".lower()
+    assert "layout" in diagnostic
+    assert "slide-deck" in diagnostic
+    for supported_layout in ("standard", "cheatsheet"):
+        assert supported_layout in diagnostic
+
+
+def test_latex_document_start_macro_preserves_standard_cover_and_toc_contract():
+    latex_support = "\n".join(
+        _read_text(path) for path in (CORE_FILE, LAYOUT_FILE) if path.exists()
+    )
+
+    assert "Hypo@metadata@layout" in latex_support
+    assert "\\HypoDocumentStart" in latex_support
+    assert "standard" in latex_support
+    assert "cheatsheet" in latex_support
+    assert "\\HypoMakeCover" in latex_support
+    assert "\\tableofcontents" in latex_support
 
 
 def test_convert_rejects_unmarked_manual_heading_number(

@@ -52,10 +52,38 @@ def test_cover_layout_metadata_is_part_of_conversion_contract(
     assert "$if(cover_image)$" in template
 
 
-def test_table_of_contents_starts_and_ends_on_dedicated_pages_by_default():
+def test_document_start_keeps_template_thin_and_dispatches_by_layout():
     template = _read_text(TEMPLATE_FILE)
+    layout = _read_text(LAYOUT_FILE)
+    compact_template = re.sub(r"[ \t]+", "", template)
+    legacy_startup = "\\HypoMakeCover\n\\clearpage\n\\tableofcontents\n\\clearpage"
 
-    assert "\\HypoMakeCover\n\\clearpage\n\\tableofcontents\n\\clearpage" in template
+    assert "\\HypoDocumentStart" in template
+    assert "\\HypoMakeCover" not in template
+    assert "\\tableofcontents" not in template
+    assert legacy_startup not in compact_template
+
+    standard_start = re.search(
+        r"\\newcommand\{\\Hypo@StandardDocumentStart\}\{%\n(?P<body>.*?)\n\}",
+        layout,
+        flags=re.DOTALL,
+    )
+    assert standard_start is not None
+    compact_standard_start = re.sub(r"[ \t]+", "", standard_start.group("body"))
+    assert legacy_startup in compact_standard_start
+
+    assert re.search(
+        r"\\ifdefstring\{\\Hypo@metadata@layout\}\{standard\}\{%\s*"
+        r"\\Hypo@StandardDocumentStart",
+        layout,
+        flags=re.DOTALL,
+    )
+    assert re.search(
+        r"\\ifdefstring\{\\Hypo@metadata@layout\}\{cheatsheet\}\{%\s*"
+        r"\\Hypo@CheatsheetDocumentStart",
+        layout,
+        flags=re.DOTALL,
+    )
 
 
 def test_cover_layout_latex_layer_declares_small_template_set():

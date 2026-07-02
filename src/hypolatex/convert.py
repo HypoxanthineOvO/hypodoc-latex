@@ -91,6 +91,7 @@ def convert_markdown(
                     f"--lua-filter={lua_filter}",
                     f"--top-level-division={_top_level_division(options.document_type)}",
                     f"--metadata=documentclass:{options.document_type}",
+                    f"--metadata=layout:{options.layout}",
                     f"--output={temp_path}",
                 ],
                 capture_output=True,

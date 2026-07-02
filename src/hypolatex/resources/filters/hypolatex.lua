@@ -17,6 +17,8 @@ local supported = {
   deliverable = true,
   checklist = true,
   rubric = true,
+  ["cheatsheet-grid"] = true,
+  ["cheatsheet-cell"] = true,
   figure = true,
   ref = true,
   table = true,
@@ -41,7 +43,7 @@ local environments = {
   rubric = "HypoRubric",
 }
 
-local supported_list = "note, tip, warning, summary, question, hint, answer, solution, qa, objective, info, task, requirement, deliverable, checklist, rubric, figure, ref, table"
+local supported_list = "note, tip, warning, summary, question, hint, answer, solution, qa, objective, info, task, requirement, deliverable, checklist, rubric, cheatsheet-grid, cheatsheet-cell, figure, ref, table"
 
 local function first_class(div)
   if div.classes and #div.classes > 0 then
@@ -243,6 +245,9 @@ local function content_latex(content)
   latex = latex:gsub("^%s+", ""):gsub("%s+$", "")
   latex = latex:gsub("\n  ([^%s])", "\n%1")
   latex = latex:gsub("\\def\\labelenumi{\\arabic{enumi}%.}\n", "")
+  latex = latex:gsub("\\texttt%b{}", function(code)
+    return code:gsub("\\ ", " ")
+  end)
   return latex
 end
 
@@ -553,7 +558,10 @@ local function format_fraction(value)
   return formatted
 end
 
-local function table_rowsep(density)
+local function table_rowsep(density, table_type)
+  if table_type == "cheatsheet" then
+    return "0.8pt"
+  end
   if density == "compact" then
     return "1.6pt"
   end
@@ -880,9 +888,13 @@ local function render_tblr_table(config, columns, head_rows, body_rows)
   local options = {
     "width=" .. config.width,
     "colspec={" .. tblr_colspec(columns) .. "}",
-    "rowsep=" .. table_rowsep(config.density),
+    "rowsep=" .. table_rowsep(config.density, config.type),
     "hline{1,Z}={0.08em}",
   }
+  if config.type == "cheatsheet" then
+    options[#options + 1] = "colsep=2pt"
+    options[#options + 1] = "cells={font=\\scriptsize}"
+  end
   if config.header and #head_rows > 0 then
     options[#options + 1] = "row{1}={font=\\bfseries}"
     options[#options + 1] = "hline{2}={0.04em}"
@@ -893,6 +905,9 @@ local function render_tblr_table(config, columns, head_rows, body_rows)
 
   lines[#lines + 1] = "\\begin{table}[htbp]"
   lines[#lines + 1] = "\\centering"
+  if config.type == "cheatsheet" then
+    lines[#lines + 1] = "\\scriptsize"
+  end
   add_float_caption(lines, config)
   lines[#lines + 1] = "\\begin{tblr}{"
   lines[#lines + 1] = table.concat(options, ",")
@@ -1060,6 +1075,241 @@ local function optional_args_text(values)
   return text
 end
 
+local function validate_directive_attributes(name, div, allowed)
+  for key, value in pairs(div.attributes or {}) do
+    if not allowed[key] then
+      error(
+        name
+          .. " directive has unsupported attribute '"
+          .. key
+          .. "' with value '"
+          .. tostring(value)
+          .. "'."
+      )
+    end
+  end
+end
+
+local function option_value(div, name, default)
+  local value = trim(attr(div, name))
+  if value == "" then
+    return default
+  end
+  return value
+end
+
+local function normalize_positive_integer_option(directive, name, value, default, max_value)
+  value = trim(value)
+  if value == "" then
+    return default
+  end
+
+  if not value:match("^%d+$") then
+    error(
+      "invalid "
+        .. directive
+        .. " "
+        .. name
+        .. " '"
+        .. value
+        .. "': "
+        .. name
+        .. " must be a positive integer"
+        .. (max_value ~= nil and " in range 1.." .. tostring(max_value) or "")
+        .. "."
+    )
+  end
+
+  local number = tonumber(value)
+  if number == nil or number < 1 or (max_value ~= nil and number > max_value) then
+    error(
+      "invalid "
+        .. directive
+        .. " "
+        .. name
+        .. " '"
+        .. value
+        .. "': "
+        .. name
+        .. " must be a positive integer"
+        .. (max_value ~= nil and " in range 1.." .. tostring(max_value) or "")
+        .. "."
+    )
+  end
+
+  return tostring(number)
+end
+
+local function normalize_choice_option(directive, name, value, default, allowed)
+  value = lower_trim(value)
+  if value == "" then
+    return default
+  end
+  if allowed[value] then
+    return value
+  end
+  error(
+    "invalid "
+      .. directive
+      .. " "
+      .. name
+      .. " '"
+      .. value
+      .. "'."
+  )
+end
+
+local function normalize_boolean_option(directive, name, value, default)
+  value = lower_trim(value)
+  if value == "" then
+    return default
+  end
+  if value == "true" or value == "false" then
+    return value
+  end
+  error(
+    "invalid "
+      .. directive
+      .. " "
+      .. name
+      .. " '"
+      .. value
+      .. "': "
+      .. name
+      .. " must be true or false."
+  )
+end
+
+local cheatsheet_cell_types = {
+  concept = true,
+  formula = true,
+  workflow = true,
+  keypoint = true,
+  example = true,
+  term = true,
+  warning = true,
+  note = true,
+}
+
+local cheatsheet_cell_priorities = {
+  normal = true,
+  medium = true,
+  high = true,
+}
+
+local function normalize_cheatsheet_cell_key_option(name, value, default, allowed)
+  local raw = trim(value)
+  if raw == "" then
+    return default
+  end
+
+  local normalized = raw:lower()
+  if allowed[normalized] then
+    return normalized
+  end
+
+  error(
+    "invalid cheatsheet-cell "
+      .. name
+      .. " '"
+      .. raw
+      .. "': unsupported value."
+  )
+end
+
+local function render_cheatsheet_cell(div)
+  validate_directive_attributes("cheatsheet-cell", div, {
+    type = true,
+    title = true,
+    priority = true,
+    span = true,
+    keep = true,
+  })
+
+  local cell_type = normalize_cheatsheet_cell_key_option(
+    "type",
+    attr(div, "type"),
+    "concept",
+    cheatsheet_cell_types
+  )
+  local title = latex_escape(option_value(div, "title", ""))
+  local priority = normalize_cheatsheet_cell_key_option(
+    "priority",
+    attr(div, "priority"),
+    "normal",
+    cheatsheet_cell_priorities
+  )
+  local span = normalize_positive_integer_option(
+    "cheatsheet-cell",
+    "span",
+    attr(div, "span"),
+    "1",
+    6
+  )
+  local keep = normalize_boolean_option(
+    "cheatsheet-cell",
+    "keep",
+    attr(div, "keep"),
+    "false"
+  )
+  local options = "type="
+    .. cell_type
+    .. ",title={"
+    .. title
+    .. "},priority="
+    .. priority
+    .. ",span="
+    .. span
+    .. ",keep="
+    .. keep
+
+  return raw_block(
+    "\\begin{HypoCheatsheetCell}["
+      .. options
+      .. "]\n"
+      .. content_latex(div.content)
+      .. "\n\\end{HypoCheatsheetCell}"
+  )
+end
+
+local function render_cheatsheet_grid(div)
+  validate_directive_attributes("cheatsheet-grid", div, {
+    columns = true,
+    gap = true,
+  })
+
+  local columns = normalize_positive_integer_option(
+    "cheatsheet-grid",
+    "columns",
+    attr(div, "columns"),
+    "2",
+    6
+  )
+  local gap = normalize_choice_option("cheatsheet-grid", "gap", attr(div, "gap"), "normal", {
+    compact = true,
+    normal = true,
+    relaxed = true,
+  })
+  local content = pandoc.List()
+  for _, block in ipairs(div.content) do
+    if block.t == "Div" and directive_for_div(block) == "cheatsheet-cell" then
+      content:insert(render_cheatsheet_cell(block))
+    else
+      content:insert(block)
+    end
+  end
+
+  return raw_block(
+    "\\begin{HypoCheatsheetGrid}[columns="
+      .. columns
+      .. ",gap="
+      .. gap
+      .. "]\n"
+      .. content_latex(content)
+      .. "\n\\end{HypoCheatsheetGrid}"
+  )
+end
+
 local function manual_heading_prefix(value)
   value = tostring(value or "")
   if value:match("^%d+[%.)、．]$") then
@@ -1185,6 +1435,14 @@ function Div(div)
 
   if directive == "table" then
     return render_controlled_table(div)
+  end
+
+  if directive == "cheatsheet-grid" then
+    return render_cheatsheet_grid(div)
+  end
+
+  if directive == "cheatsheet-cell" then
+    return render_cheatsheet_cell(div)
   end
 
   if directive == "figure" then

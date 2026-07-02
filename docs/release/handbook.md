@@ -124,6 +124,19 @@ HypoDoc Markdown 子集面向可构建、可审阅、可同步的长文资料。
 
 受控表格的目标是让 AI 和人类都能维护表格意图，不需要把 LaTeX 列格式直接塞进 Markdown。
 
+# Cheatsheet 紧凑布局
+
+需要一页或两页的紧凑速查表时，在 frontmatter 中声明 `document_type: article` 加 `layout: cheatsheet`。cheatsheet 是 `article` 之上的布局模式，不是新的文档类型：正文、标题、语义模块和受控表格保持兼容；不写该 layout 时文档仍走标准 article 版式。
+
+写作约定是：
+
+- 多栏内容放在 `cheatsheet-grid` 中（如 `columns="4"`、`gap="compact"`），正文按语义顺序自然顺排，multicols 自动换列，不手写 `\columnbreak`。
+- 正文章节保持普通标题加列表的流式写法；只有“别忘了”“重点”“补充”这类提示才使用 `cheatsheet-cell` 小盒子。盒子是强调手段，不是结构单位。
+- 窄栏中较长公式写成行间数学，过宽的等式链用 `aligned` 拆行；短字段可以用行内代码，过长的行内代码会自动降级为可折行文本。
+- 高密度对照表使用 `.table` 配 `type: cheatsheet` 与 `density: compact`。
+
+`hd:make-cheatsheet` 是 AI 面向的 Skill workflow：从既有资料整理速查表时，目标页数是硬约束，压缩优先级为公式高于关键点高于示例；无法压进目标页数时应返回冲突报告，而不是静默加页。内置示例模板是 `skill/templates/cheatsheet.md`，完整说明见 `docs/c5-cheatsheet.md`。
+
 # 图片
 
 图片推荐用 `.figure` 指令，而不是在正文中混合裸 LaTeX。发布文档中只有在图片资源可公开、可提交、可通过相对路径解析时才引用图片。

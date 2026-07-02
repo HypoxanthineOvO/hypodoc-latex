@@ -6,15 +6,38 @@ from pathlib import Path
 
 TEST_ROOT = Path(__file__).parent
 FIXTURE_ROOT = TEST_ROOT / "fixtures" / "tables"
+M3_FIXTURE_ROOT = TEST_ROOT / "fixtures" / "m3"
 SNAPSHOT_ROOT = TEST_ROOT / "snapshots" / "tables"
 TEX_PACKAGE_ROOT = Path(__file__).resolve().parents[1] / "tex" / "latex" / "hypolatex"
 HYPOLATEX_PACKAGE_FILE = TEX_PACKAGE_ROOT / "hypolatex.sty"
 TABLE_PACKAGE_FILE = TEX_PACKAGE_ROOT / "hypolatex-tables.sty"
+LAYOUT_PACKAGE_FILE = TEX_PACKAGE_ROOT / "hypolatex-layout.sty"
+CHEATSHEET_PACKAGE_FILE = TEX_PACKAGE_ROOT / "hypolatex-cheatsheet.sty"
 MIN_PDF_BYTES = 1024
 
 
 def _read_text(path):
     return path.read_text(encoding="utf-8")
+
+
+def _document_body_from(tex, marker):
+    index = tex.find(marker)
+    assert index >= 0, f"Missing expected document body marker: {marker}"
+    return tex[index:]
+
+
+def _source_windows_containing(source, needle, radius=900):
+    return [
+        source[max(0, match.start() - radius) : match.end() + radius]
+        for match in re.finditer(re.escape(needle), source, flags=re.IGNORECASE)
+    ]
+
+
+def _has_any_pattern(source, patterns):
+    return any(
+        re.search(pattern, source, re.IGNORECASE | re.DOTALL)
+        for pattern in patterns
+    )
 
 
 def _invoke_convert(runner, cli_app, input_path, output_path):
@@ -108,7 +131,11 @@ def test_ordinary_markdown_table_outside_table_div_keeps_pandoc_snapshot(
 
     assert result.exit_code == 0, result.output
     tex = _read_text(output_path)
-    assert tex == _read_text(expected_path)
+    body_marker = "\\chapter{Ordinary Markdown Table}"
+    assert _document_body_from(tex, body_marker) == _document_body_from(
+        _read_text(expected_path),
+        body_marker,
+    )
     assert "\\begin{longtable}" in tex
     assert "\\HypoTableConfig" not in tex
     assert "\\begin{tblr}" not in tex
@@ -168,6 +195,68 @@ def test_public_table_patterns_include_comparison_checklist_rubric_and_compact_c
     assert "type=cheatsheet" in tex, (
         "The compact cheatsheet fixture must be implemented as a table pattern, "
         "not only as density=compact on another pattern."
+    )
+
+
+def test_m3_printable_cheatsheet_table_path_converts_to_compact_fragments(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    input_path = M3_FIXTURE_ROOT / "printable-cheatsheet.md"
+    output_path = tmp_path / "printable-cheatsheet.tex"
+
+    result = _invoke_convert(runner, cli_app, input_path, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    _assert_contains_snapshot_fragments(
+        tex, SNAPSHOT_ROOT / "cheatsheet-compact-fragments.txt"
+    )
+    assert "type=cheatsheet" in tex
+    assert "density=compact" in tex
+    assert "\\begin{tblr}" in tex
+    assert "Dense Table Evidence" in tex
+
+
+def test_m3_cheatsheet_visual_contract_declares_scoped_compact_list_behavior():
+    layout_source = _read_text(LAYOUT_PACKAGE_FILE)
+    cheatsheet_source = _read_text(CHEATSHEET_PACKAGE_FILE)
+    visual_surface = f"{layout_source}\n{cheatsheet_source}"
+    cheatsheet_start = re.search(
+        r"\\newcommand\{\\Hypo@CheatsheetDocumentStart\}\{%(?P<body>.*?)"
+        r"\n\}\n\n\\newcommand\{\\HypoDocumentStart\}",
+        layout_source,
+        re.DOTALL,
+    )
+
+    assert cheatsheet_start is not None, (
+        "The cheatsheet layout must keep its own document-start surface so "
+        "compact print behavior stays scoped to layout: cheatsheet."
+    )
+    body = cheatsheet_start.group("body")
+    assert "\\Hypo@StandardDocumentStart" not in body
+
+    scoped_windows = _source_windows_containing(visual_surface, "cheatsheet")
+    assert scoped_windows, (
+        "M3 needs a cheatsheet-specific visual surface so compact print behavior "
+        "does not leak into ordinary article layouts."
+    )
+    compact_list_patterns = (
+        r"\\setlist(?:\[[^\]]+\])?\s*\{[^}]*"
+        r"(?:itemsep|topsep|parsep|partopsep|leftmargin|nosep|noitemsep)",
+        r"\\(?:setlength|addtolength)\s*\{\\"
+        r"(?:itemsep|topsep|parsep|partopsep|leftmargini)\}",
+        r"(?:itemsep|topsep|parsep|partopsep|leftmargin)\s*=",
+        r"\b(?:nosep|noitemsep)\b",
+    )
+    assert any(
+        _has_any_pattern(window, compact_list_patterns) for window in scoped_windows
+    ), (
+        "M3 printable cheatsheets need scoped compact list behavior in a "
+        "cheatsheet-specific visual surface. Page density itself is validated "
+        "by the PDF page-count evidence, so this contract should accept any "
+        "implementation route that keeps list spacing scoped to cheatsheets."
     )
 
 
