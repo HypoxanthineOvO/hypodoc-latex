@@ -11,6 +11,7 @@ CORE_FILE = TEX_PACKAGE_ROOT / "hypolatex-core.sty"
 LAYOUT_FILE = TEX_PACKAGE_ROOT / "hypolatex-layout.sty"
 ANSWER_MODE_FIXTURE = FIXTURE_ROOT / "semantics" / "answer-mode.md"
 CHEATSHEET_LAYOUT_FIXTURE = FIXTURE_ROOT / "m1" / "cheatsheet-layout.md"
+BEAMER_MINIMAL_FIXTURE = FIXTURE_ROOT / "beamer" / "minimal-inheritance.md"
 
 
 CONVERSION_SNAPSHOT_CASES = (
@@ -155,6 +156,94 @@ Run `hypolatex doctor`.
     assert "\\section{Short Manual}" in tex
     assert "\\subsection{Setup}" in tex
     assert "\\chapter{" not in tex
+
+
+def test_convert_beamer_fixture_uses_beamer_frames_and_slide_hierarchy(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    output_path = tmp_path / "beamer-minimal.tex"
+
+    result = _invoke_convert(runner, cli_app, BEAMER_MINIMAL_FIXTURE, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    assert "\\documentclass{beamer}" in tex
+    assert "\\usepackage{hypolatex-beamer}" in tex
+    assert "\\begin{frame}" in tex
+    assert "\\end{frame}" in tex
+    assert "\\section{Decision Loop}" in tex
+    assert "\\subsection{Conversion Contract}" in tex
+    assert "\\begin{frame}{Frame Contracts}" in tex
+    assert "\\begin{frame}{Frame Contracts (continued 2/3)}" in tex
+    assert "\\chapter{" not in tex
+    assert "\\usepackage{hypolatex}\n" not in tex
+
+
+@pytest.mark.parametrize("palette", ("red", "blue", "yellow", "gray", "mono"))
+def test_convert_beamer_palette_reaches_generated_tex_metadata(
+    runner,
+    cli_app,
+    tmp_path,
+    palette,
+):
+    input_path = tmp_path / f"beamer-palette-{palette}.md"
+    input_path.write_text(
+        f"""---
+title: Palette {palette}
+document_type: beamer
+palette: {palette}
+---
+
+# Theme System
+
+## Palette Contract
+
+### Visible Slide
+
+- Palette metadata must reach the Beamer template.
+""",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / f"beamer-palette-{palette}.tex"
+
+    result = _invoke_convert(runner, cli_app, input_path, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    assert f"\\HypoSetMetadata{{palette}}{{{palette}}}" in tex
+
+
+def test_convert_beamer_defaults_to_169_documentclass_aspectratio(
+    runner,
+    cli_app,
+    tmp_path,
+):
+    input_path = tmp_path / "beamer-default-aspectratio.md"
+    input_path.write_text(
+        """---
+title: Default Aspect Ratio
+document_type: beamer
+---
+
+# Theme System
+
+## Geometry Contract
+
+### Default Slide
+
+- The default Beamer deck should be widescreen.
+""",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "beamer-default-aspectratio.tex"
+
+    result = _invoke_convert(runner, cli_app, input_path, output_path)
+
+    assert result.exit_code == 0, result.output
+    tex = _read_text(output_path)
+    assert "\\documentclass[aspectratio=169]{beamer}" in tex
 
 
 def test_convert_cheatsheet_layout_keeps_article_document_type_and_startup_contract(

@@ -20,6 +20,8 @@ theme: classic-readable
 
 基础兼容主题，适合调试、最小文档和渲染器测试。需要尽量排除视觉样式干扰时使用它。
 
+`plain` 也提供 Beamer theme adapter。Beamer deck 使用 `document_type: beamer`（别名 `slides`/`presentation`），H1 section、H2 subsection、H3 frame title，`---` 作为 frame separator/new frame。`frame_title_inheritance_limit` default `3`，`continued_title_style` 支持 `subtle`、`suffix`、`none`，并可配合 `section_dividers`、`subsection_dividers` 和 `strict_structure`。H2 without H1 invalid。Slide semantic blocks 包括 `objective`、`info`、`task`、`requirement`、`deliverable`、`checklist`、`rubric`、`question`、`hint`、`answer`、`solution`；density/overfull lint 是 limited heuristic，不是布局保证。local asset 使用相对路径或 local `resource-root`/`resource_root`，remote asset 不会 fetch。
+
 ### `classic-readable`
 
 长文默认选择，适合教程、书籍感资料和一般 PDF 输出。它优先保证中文排版稳定、正文可读和纸面阅读舒适度。

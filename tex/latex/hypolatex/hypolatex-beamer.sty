@@ -1,0 +1,398 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{hypolatex-beamer}[2026/07/04 Hypo-LaTeX Beamer package]
+
+\RequirePackage{iftex}
+\ifXeTeX
+\else
+  \PackageError{hypolatex-beamer}{Hypo-LaTeX Beamer requires XeLaTeX}{Run latexmk with -xelatex.}
+\fi
+
+\RequirePackage[UTF8]{ctex}
+\RequirePackage{fontspec}
+\RequirePackage{etoolbox}
+\RequirePackage{xparse}
+\RequirePackage{xcolor}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins}
+\RequirePackage{graphicx}
+\setkeys{Gin}{keepaspectratio}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{longtable}
+\RequirePackage{tabularray}
+
+\UseTblrLibrary{booktabs}
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\raisebox{0.1ex}{\scriptsize$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\raisebox{0.1ex}{\scriptsize$\bullet$}}
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+
+\definecolor{HypoBeamerMain}{HTML}{8B0000}
+\definecolor{HypoBeamerInk}{HTML}{1F2937}
+\definecolor{HypoBeamerMuted}{HTML}{64748B}
+\definecolor{HypoBeamerPanel}{HTML}{F8FAFC}
+\definecolor{HypoBeamerFrame}{HTML}{CBD5E1}
+\definecolor{HypoTableStripe}{HTML}{F6F8FA}
+
+\colorlet{HypoBlockFrame}{HypoBeamerMain!40!white}
+\colorlet{HypoBlockTitleBg}{HypoBeamerMain!12!white}
+\colorlet{HypoBlockBodyBg}{HypoBeamerMain!4!white}
+\colorlet{HypoBreadcrumbFg}{white!80!HypoBeamerMain}
+
+\setbeamercolor{normal text}{fg=HypoBeamerInk,bg=white}
+\setbeamercolor{structure}{fg=HypoBeamerMain}
+\setbeamercolor{frametitle}{fg=white,bg=HypoBeamerMain}
+\setbeamercolor{block title}{fg=HypoBeamerMain,bg=HypoBeamerPanel}
+\setbeamercolor{block body}{fg=HypoBeamerInk,bg=HypoBeamerPanel}
+\setbeamercolor{section page}{fg=white,bg=HypoBeamerMain}
+\setbeamercolor{footline}{fg=HypoBeamerMuted,bg=white}
+\setbeamerfont{frametitle}{series=\bfseries}
+\setbeamerfont{title}{series=\bfseries,size=\Large}
+\setbeamerfont{subtitle}{series=\mdseries,size=\normalsize}
+\setbeamerfont{author}{size=\small}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{footline}{size=\scriptsize}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}%
+}
+
+\makeatletter
+\newcommand{\Hypo@metadata@title}{}
+\newcommand{\Hypo@metadata@subtitle}{}
+\newcommand{\Hypo@metadata@author}{}
+\newcommand{\Hypo@metadata@organization}{}
+\newcommand{\Hypo@metadata@course}{}
+\newcommand{\Hypo@metadata@date}{}
+\newcommand{\Hypo@metadata@version}{}
+\newcommand{\Hypo@metadata@logo}{}
+\newcommand{\Hypo@metadata@palette}{red}
+\newcommand{\Hypo@metadata@footline}{full}
+\newcommand{\Hypo@metadata@icon}{}
+\newcommand{\Hypo@metadata@abstract}{}
+\newcommand{\Hypo@metadata@theme}{}
+\newcommand{\Hypo@metadata@layout}{standard}
+\newcommand{\Hypo@answer@mode}{student}
+\newif\ifHypo@showanswers
+\Hypo@showanswersfalse
+
+\newcommand{\HypoSetMetadata}[2]{%
+  \ifcsdef{Hypo@metadata@#1}
+    {\csgdef{Hypo@metadata@#1}{#2}}
+    {\PackageWarning{hypolatex-beamer}{Unknown metadata key `#1'}}%
+}
+
+\newcommand{\HypoMetadata}[1]{%
+  \ifcsdef{Hypo@metadata@#1}{\csuse{Hypo@metadata@#1}}{}%
+}
+
+\newcommand{\HypoApplyPalette}[1]{%
+  \ifstrequal{#1}{red}{%
+    \definecolor{HypoBeamerMain}{HTML}{8B0000}%
+  }{%
+    \ifstrequal{#1}{blue}{%
+      \definecolor{HypoBeamerMain}{HTML}{1E40AF}%
+    }{%
+      \ifstrequal{#1}{yellow}{%
+        \definecolor{HypoBeamerMain}{HTML}{B45309}%
+      }{%
+        \ifstrequal{#1}{gray}{%
+          \definecolor{HypoBeamerMain}{HTML}{374151}%
+        }{%
+          \ifstrequal{#1}{mono}{%
+            \definecolor{HypoBeamerMain}{HTML}{1F2937}%
+          }{%
+            \PackageWarning{hypolatex-beamer}{Unknown palette `#1`; using red}%
+            \definecolor{HypoBeamerMain}{HTML}{8B0000}%
+          }%
+        }%
+      }%
+    }%
+  }%
+  \setbeamercolor{structure}{fg=HypoBeamerMain}%
+  \setbeamercolor{frametitle}{fg=white,bg=HypoBeamerMain}%
+  \setbeamercolor{block title}{fg=HypoBeamerMain,bg=HypoBeamerPanel}%
+  \setbeamercolor{section page}{fg=white,bg=HypoBeamerMain}%
+  \setbeamercolor{title}{fg=white,bg=HypoBeamerMain}%
+  \colorlet{HypoBlockFrame}{HypoBeamerMain!40!white}%
+  \colorlet{HypoBlockTitleBg}{HypoBeamerMain!12!white}%
+  \colorlet{HypoBlockBodyBg}{HypoBeamerMain!4!white}%
+  \colorlet{HypoBreadcrumbFg}{white!80!HypoBeamerMain}%
+}
+
+\newcommand{\HypoApplyFootline}[1]{%
+  \ifstrequal{#1}{full}{%
+    \setbeamertemplate{footline}{%
+      \leavevmode%
+      \hbox{%
+        \begin{beamercolorbox}[wd=.35\paperwidth,ht=2.4ex,dp=1ex,leftskip=1.2em]{footline}%
+          \usebeamerfont{footline}page \insertframenumber/\inserttotalframenumber%
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.65\paperwidth,ht=2.4ex,dp=1ex,rightskip=1.2em plus1fil]{footline}%
+          \hfill\usebeamerfont{footline}\insertshortauthor{} | \insertshorttitle%
+        \end{beamercolorbox}%
+      }%
+    }%
+  }{%
+    \ifstrequal{#1}{page}{%
+      \setbeamertemplate{footline}{%
+        \leavevmode%
+        \hbox{%
+          \begin{beamercolorbox}[wd=\paperwidth,ht=2.4ex,dp=1ex,center]{footline}%
+            \usebeamerfont{footline}\insertframenumber/\inserttotalframenumber%
+          \end{beamercolorbox}%
+        }%
+      }%
+    }{%
+      \ifstrequal{#1}{none}{%
+        \setbeamertemplate{footline}{}%
+      }{%
+        \PackageWarning{hypolatex-beamer}{Unknown footline `#1`; using full}%
+        \HypoApplyFootline{full}%
+      }%
+    }%
+  }%
+}
+
+\setbeamertemplate{title page}{%
+  \vbox{}%
+  \vfill%
+  \begin{beamercolorbox}[wd=\paperwidth,sep=1.2em,leftskip=1.4em,rightskip=1.4em]{title}%
+    \begin{minipage}[t]{0.74\paperwidth}%
+      {\usebeamerfont{title}\inserttitle\par}%
+      \ifx\insertsubtitle\@empty\else
+        \vspace{0.4em}{\usebeamerfont{subtitle}\insertsubtitle\par}%
+      \fi
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[t]{0.16\paperwidth}%
+      \raggedleft%
+      \edef\@hypo@logopath{\HypoMetadata{logo}}%
+      \ifx\@hypo@logopath\@empty\else
+        \includegraphics[height=1.2cm]{\@hypo@logopath}%
+      \fi%
+    \end{minipage}%
+  \end{beamercolorbox}%
+  \vspace{1.4em}%
+  \begin{beamercolorbox}[wd=\paperwidth,leftskip=1.4em,rightskip=1.4em]{normal text}%
+    {\usebeamerfont{author}\insertauthor\par}%
+    \ifstrempty{\HypoMetadata{organization}}{}{%
+      \vspace{0.3em}{\small\HypoMetadata{organization}\par}%
+    }%
+    \ifstrempty{\HypoMetadata{course}}{}{%
+      \vspace{0.3em}{\small\HypoMetadata{course}\par}%
+    }%
+    \vspace{0.8em}{\usebeamerfont{date}\insertdate\par}%
+  \end{beamercolorbox}%
+  \vfill%
+}
+
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip%
+  \begin{beamercolorbox}[wd=\paperwidth,sep=0.9ex,leftskip=1em,rightskip=1em]{frametitle}%
+    \ifnum\value{subsection}>0\relax
+      {\scriptsize\mdseries\color{HypoBreadcrumbFg}\insertsubsection\par}%
+      \vspace{0.2ex}%
+    \fi
+    \usebeamerfont{frametitle}\insertframetitle%
+  \end{beamercolorbox}%
+}
+
+\setbeamertemplate{section page}{%
+  \vfill%
+  \begin{beamercolorbox}[wd=\paperwidth,sep=1.4em,center]{section page}%
+    \usebeamerfont{frametitle}\Large\insertsection\par%
+  \end{beamercolorbox}%
+  \vfill%
+}
+
+\AtBeginSection[]{%
+  \begin{frame}[plain]%
+    \sectionpage%
+  \end{frame}%
+}
+
+\AtBeginDocument{%
+  \expandafter\HypoApplyPalette\expandafter{\HypoMetadata{palette}}%
+  \renewcommand{\familydefault}{\sfdefault}%
+  \@ifundefined{IfFontExistsTF}{}{%
+    \IfFontExistsTF{Noto Sans CJK SC}{%
+      \IfFontExistsTF{Noto Sans CJK SC Bold}{%
+        \setCJKsansfont{Noto Sans CJK SC}[BoldFont={Noto Sans CJK SC Bold}]%
+      }{%
+        \setCJKsansfont{Noto Sans CJK SC}%
+      }%
+    }{}%
+  }%
+  \expandafter\HypoApplyFootline\expandafter{\HypoMetadata{footline}}%
+}
+
+\newcommand{\HypoSetAnswerMode}[1]{%
+  \renewcommand{\Hypo@answer@mode}{#1}%
+  \ifstrequal{#1}{student}{%
+    \Hypo@showanswersfalse
+  }{%
+    \ifstrequal{#1}{review}{%
+      \Hypo@showanswerstrue
+    }{%
+      \ifstrequal{#1}{teacher}{%
+        \Hypo@showanswerstrue
+      }{%
+        \PackageError{hypolatex-beamer}{Unknown answer mode `#1`}{Supported answer modes: student, review, teacher.}%
+      }%
+    }%
+  }%
+}
+
+\newcommand{\HypoIfAnswerVisibleTF}[2]{%
+  \ifHypo@showanswers
+    #1%
+  \else
+    #2%
+  \fi
+}
+
+\newcommand{\HypoUseTheme}[1]{%
+  \PackageInfo{hypolatex-beamer}{Using Beamer theme `#1`}%
+}
+
+\newcommand{\HypoRef}[1]{\ref{#1}}
+
+\newcommand{\HypoFigureEx}[5]{%
+  \begin{figure}
+    \centering
+    \IfFileExists{#2}{%
+      \includegraphics[width=#4]{#2}%
+    }{%
+      \fbox{%
+        \parbox[c][0.32\textheight][c]{0.78\linewidth}{%
+          \centering
+          \small Figure asset unavailable\\[0.4em]
+          \ttfamily\detokenize{#2}%
+        }%
+      }%
+    }%
+    \caption{#3}%
+    \ifstrempty{#1}{}{\label{#1}}%
+  \end{figure}%
+}
+
+\newcommand{\HypoFigure}[3]{%
+  \HypoFigureEx{#1}{#2}{#3}{0.82\linewidth}{htbp}%
+}
+
+\newtcolorbox{HypoBlockBox}[1]{%
+  colback=HypoBlockBodyBg,
+  colframe=HypoBlockFrame,
+  colbacktitle=HypoBlockTitleBg,
+  coltitle=HypoBeamerMain,
+  fonttitle=\bfseries,
+  title={#1},
+  boxrule=0.8pt,
+  arc=1.5pt,
+  left=5pt,
+  right=5pt,
+  top=4pt,
+  bottom=4pt,
+  toptitle=2.5pt,
+  bottomtitle=2.5pt,
+  before skip=8pt,
+  after skip=8pt%
+}
+
+\newtcolorbox{HypoQuoteBox}{%
+  enhanced,
+  frame hidden,
+  boxrule=0pt,
+  sharp corners,
+  colback=HypoBlockBodyBg,
+  borderline west={2.5pt}{0pt}{HypoBeamerMain},
+  left=8pt,
+  right=6pt,
+  top=4pt,
+  bottom=4pt,
+  before skip=7pt,
+  after skip=7pt%
+}
+\renewenvironment{quote}{\begin{HypoQuoteBox}}{\end{HypoQuoteBox}}
+\renewenvironment{quotation}{\begin{HypoQuoteBox}}{\end{HypoQuoteBox}}
+
+\NewDocumentEnvironment{HypoCodeBlock}{+b}{%
+  \begin{HypoBlockBox}{Code}
+    \ttfamily\small\detokenize{#1}
+  \end{HypoBlockBox}
+}{}
+
+\NewDocumentEnvironment{HypoCodeCommand}{+b}{%
+  \begin{HypoBlockBox}{Command}
+    \ttfamily\small\detokenize{#1}
+  \end{HypoBlockBox}
+}{}
+
+\NewDocumentEnvironment{HypoBeamerBlock}{m +b}{%
+  \begin{HypoBlockBox}{#1}
+    #2%
+  \end{HypoBlockBox}
+}{}
+
+\NewDocumentEnvironment{HypoNote}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Note}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoTip}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Tip}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoWarning}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Warning}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoSummary}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Summary}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoObjective}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Objective}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoInfo}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Info}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoTask}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Task}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoRequirement}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Requirement}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoDeliverable}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Deliverable}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoChecklist}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Checklist}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoRubric}{O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Rubric}{#1}}#2\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoQuestion}{O{} O{} O{true} O{outline} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#2}{Question}{#2}}#5\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoHint}{O{} O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Hint}{#1}}#3\end{HypoBeamerBlock}%
+}{}
+\NewDocumentEnvironment{HypoAnswer}{O{} O{} +b}{%
+  \HypoIfAnswerVisibleTF{%
+    \begin{HypoBeamerBlock}{\ifstrempty{#1}{Answer}{#1}}#3\end{HypoBeamerBlock}%
+  }{}%
+}{}
+\NewDocumentEnvironment{HypoSolution}{O{} O{} +b}{%
+  \HypoIfAnswerVisibleTF{%
+    \begin{HypoBeamerBlock}{\ifstrempty{#1}{Solution}{#1}}#3\end{HypoBeamerBlock}%
+  }{}%
+}{}
+\NewDocumentEnvironment{HypoQA}{O{} O{} +b}{%
+  \begin{HypoBeamerBlock}{\ifstrempty{#1}{Q-A}{#1}}#3\end{HypoBeamerBlock}%
+}{}
+
+\NewDocumentCommand{\HypoTableConfig}{m}{}
+\NewDocumentCommand{\HypoTableColumn}{m}{}
+\NewDocumentCommand{\HypoTableColumnSpec}{m}{}
+
+\makeatother

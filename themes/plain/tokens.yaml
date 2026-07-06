@@ -15,3 +15,21 @@ colors:
 layout:
   paper: letter
   margin: 1in
+beamer_palettes:
+  red:
+    main: "#8B0000"
+  blue:
+    main: "#1E40AF"
+  yellow:
+    main: "#B45309"
+  gray:
+    main: "#374151"
+  mono:
+    main: "#1F2937"
+beamer_blocks:
+  frame: "main!40!white"
+  title_back: "main!12!white"
+  body_back: "main!4!white"
+  title_text: main
+  border_rule: 0.8pt
+

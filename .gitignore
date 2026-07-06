@@ -8,11 +8,23 @@ __pycache__/
 
 # Build outputs
 build/
+build/private/
 dist/
 *.egg-info/
 
 # Local scratch space
 tmp/
+
+# Local workflow/agent state
+.pipeline/
+.plan-state/
+.opencode/
+AGENTS.md
+PROJECT-SUMMARY.md
+opencode.json
+
+# Editor-local settings
+.vscode/
 
 # Private corpus lane: real documents and generated evidence stay local.
 tests/private_corpus.toml

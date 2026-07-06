@@ -1,18 +1,18 @@
 ---
 name: hypolatex
-description: Use this skill for Hypo-LaTeX authoring, conversion, build, compile, and PDF evidence workflows with `hypolatex` when the user wants to write Markdown, convert to TeX, or produce/check PDFs.
+description: Use this skill for Hypo-LaTeX authoring, conversion, build, compile, slides, Beamer, and PDF evidence workflows with `hypolatex` when the user wants to write Markdown, convert to TeX, or produce/check PDFs.
 ---
 
 # Hypo-LaTeX Theme-first Workflow
 
-Use Hypo-LaTeX for longform Markdown documents that need a reviewable TeX file or a compiled PDF.
+Use Hypo-LaTeX for longform Markdown documents and Beamer Slides DSL decks that need a reviewable TeX file or a compiled PDF.
 
 ## Workflow
 
 1. Choose a theme preset first. For ordinary AI authoring, set only `theme:` in frontmatter or use `--theme` on build commands; do not invent font, paper, accent, cover, or resource-root fields by default.
 2. Run `hypolatex doctor` before conversion or build work. Treat it as the environment and dependency check for Pandoc, latexmk, XeLaTeX, and required TeX packages.
 3. If `hypolatex doctor` reports missing dependencies, stop and ask the user to install the missing items. Do not pretend dependencies are installed.
-4. Copy, create, or edit a Markdown template before building. Use `skill/templates/longform.md` as the longform starting point, or make a similar `.md` template with minimal frontmatter and supported fenced directives.
+4. Copy, create, or edit a Markdown template before building. Use `skill/templates/longform.md` as the longform starting point, `skill/templates/beamer.md` as the Beamer slides starting point, or make a similar `.md` template with minimal frontmatter and supported fenced directives.
 5. Generate reviewable TeX with:
 
 ```bash
@@ -48,6 +48,62 @@ theme: classic-readable
 ```
 
 Do not add advanced style fields to ordinary AI-authored drafts unless the user asks for them or the source project already requires them.
+
+## Beamer Slides DSL
+
+Use Beamer when the user asks for slides, presentation, or a deck that should build through the current Hypo-LaTeX Slides DSL. This is first-class Beamer support for the scoped Markdown contract; do not claim there is an automatic Marp converter or arbitrary LaTeX deck converter.
+
+Start from `skill/templates/beamer.md` for a public function matrix deck:
+
+```bash
+hypolatex build skill/templates/beamer.md --output build/skill-beamer.pdf
+```
+
+Frontmatter contract:
+
+```yaml
+---
+title: Function Matrix
+theme: plain
+document_type: beamer
+palette: red
+aspectratio: "169"
+footline: full
+section_dividers: true
+subsection_dividers: false
+frame_title_inheritance_limit: 3
+continued_title_style: subtle
+strict_structure: true
+---
+```
+
+`document_type: beamer` selects Beamer. The aliases `slides` and `presentation` resolve to the same document type.
+
+Heading and frame contract:
+
+- H1 (`#`) maps to a Beamer section.
+- H2 (`##`) maps to a Beamer subsection.
+- H3 (`###`) maps to a frame title.
+- `---` is the frame separator/new frame marker.
+- With `strict_structure: true`, H2 without H1 is invalid.
+
+Slides options:
+
+- `palette`: `red`, `blue`, `yellow`, `gray`, or `mono`; default `red`.
+- `aspectratio`: `43`, `54`, `149`, `1610`, `169`, or `32`; default `169`.
+- `footline`: `full`, `page`, or `none`; default `full`.
+- `logo`: optional local title-page image path.
+- `section_dividers`: create section divider frames.
+- `subsection_dividers`: create subsection divider frames.
+- `frame_title_inheritance_limit`: default `3`; limits how many separator-created frames can inherit the previous H3 frame title.
+- `continued_title_style`: `subtle`, `suffix`, or `none`.
+- `strict_structure`: reject unsafe heading order.
+
+Supported semantic blocks on slides are `objective`, `info`, `task`, `requirement`, `deliverable`, `checklist`, `rubric`, `question`, `hint`, `answer`, and `solution`. Controlled `.table` blocks are supported on slides. Density and overfull lint are heuristic and limited; they are not a layout guarantee for crowded frames.
+
+Local asset rule: slide decks may reference local asset files by relative path or a local `resource-root` / `resource_root`. Do not fetch remote assets, and do not use private local files in public templates or public fixtures.
+
+Image sizing rule: Beamer images preserve aspect ratio by default, even when both width and height are provided. Use `stretch=true` only when the image should deliberately fill the requested box without `keepaspectratio`, for example `![Result](assets/result.png){width=50% height=40% stretch=true}`.
 
 ## Optional Advanced Overrides
 
@@ -444,5 +500,5 @@ When convert or build fails, read the exit code, stderr, and diagnostics before 
 
 - XeLaTeX is the first and default PDF engine path in the MVP.
 - Pandoc is required and must be installed.
-- Beamer is not supported and is out of scope for this MVP.
+- Beamer/slides are supported for the current Slides DSL; automatic Marp conversion and arbitrary LaTeX deck conversion are outside the current scope.
 - Textual and TUI interfaces are not supported and are deferred outside the MVP.

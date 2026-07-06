@@ -158,3 +158,55 @@ columns:
 ````
 
 当前表格类型包括 `default`、`comparison`、`checklist`、`rubric`、`cheatsheet`、`compact` 和 `long`。当前密度包括 `compact`、`normal` 和 `comfortable`。
+
+## Beamer function matrix deck
+
+Beamer slides 使用 `document_type: beamer`，也接受 `slides` 和 `presentation` 别名。H1 是 section，H2 是 subsection，H3 是 frame title；`---` 是 frame separator/new frame。`strict_structure: true` 时 H2 without H1 invalid。`frame_title_inheritance_limit` default `3`，`continued_title_style` 可设为 `subtle`、`suffix` 或 `none`；`section_dividers` 和 `subsection_dividers` 控制分隔页。
+
+````markdown
+---
+title: Function Matrix
+theme: plain
+document_type: beamer
+section_dividers: true
+subsection_dividers: false
+frame_title_inheritance_limit: 3
+continued_title_style: subtle
+strict_structure: true
+---
+
+# Function Matrix
+
+## Mapping Contract
+
+### Domain And Codomain
+
+::: {.objective title="Slide Goal"}
+Relate a function's domain and codomain to the shape of its matrix.
+:::
+
+---
+
+### Function Matrix Table
+
+::: {.table}
+```yaml
+type: comparison
+density: compact
+columns:
+  - align: left
+    width: 0.30
+  - align: left
+    width: 0.55
+```
+
+| Object | Matrix evidence |
+|---|---|
+| Kernel | Solutions of $Ax=0$ |
+| Image | Span of columns of $A$ |
+| Rank | Dimension of the image |
+
+:::
+````
+
+Slides 支持 semantic blocks：`objective`、`info`、`task`、`requirement`、`deliverable`、`checklist`、`rubric`、`question`、`hint`、`answer`、`solution`。density/overfull lint 是 heuristic/limited，不保证最终布局。Slide local asset 只能使用 relative/local 路径或 `resource-root`/`resource_root`；remote files do not fetch。完整示例见 `skill/templates/beamer.md`。

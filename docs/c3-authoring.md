@@ -238,3 +238,18 @@ uv run hypolatex build skill/templates/review.md --answer-mode review --output b
 The private corpus workflow uses real local documents. Keep real samples under `tests/private/corpus` or set `HYPOLATEX_TEST_CORPUS` to another local corpus root. Use the committed manifest and `scripts/prepare_private_corpus.py` to list, check, and prepare smoke samples, then run private smoke pytest selections with outputs in pytest `tmp_path` or ignored `tests/private/results` paths.
 
 Real artifacts and results are local only. Do not commit real source files, private PDFs, generated private TeX, logs, JSON summaries, screenshots, or extracted text. Public reports may record that private corpus smoke validation passed or failed, but they must not include private corpus content.
+
+## Beamer Note
+
+C3 semantic blocks also work on Beamer slides. For `document_type: beamer`
+(`slides`/`presentation` aliases), H1 maps to section, H2 maps to subsection,
+H3 maps to frame title, and `---` is a frame separator/new frame. The same
+semantic blocks are supported on slides: `objective`, `info`, `task`,
+`requirement`, `deliverable`, `checklist`, `rubric`, `question`, `hint`,
+`answer`, and `solution`. `strict_structure` makes H2 without H1 invalid;
+`frame_title_inheritance_limit` default is `3`; `continued_title_style` values
+are `subtle`, `suffix`, and `none`; `section_dividers` and
+`subsection_dividers` control divider frames. Density/overfull lint is a
+limited heuristic, not a layout guarantee. Slide local asset references must be
+relative local files or a local `resource-root`/`resource_root`; remote files
+are not fetched.

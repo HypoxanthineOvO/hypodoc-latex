@@ -86,6 +86,32 @@ def test_document_options_reads_frontmatter_document_type(tmp_path):
     assert _option_value(options, "document_type") == "article"
 
 
+@pytest.mark.parametrize(
+    ("document_type", "expected"),
+    [
+        ("beamer", "beamer"),
+        ("slides", "beamer"),
+        ("presentation", "beamer"),
+    ],
+)
+def test_document_options_accepts_beamer_and_slide_aliases(
+    tmp_path,
+    document_type,
+    expected,
+):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / f"{document_type}.md",
+        f"""
+        document_type: {document_type}
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "document_type") == expected
+
+
 def test_document_options_reads_frontmatter_layout_without_changing_document_type(
     tmp_path,
 ):
@@ -175,7 +201,7 @@ def test_document_options_rejects_invalid_document_type_with_supported_values(tm
     diagnostic = str(excinfo.value).lower()
     assert "document_type" in diagnostic
     assert "poster" in diagnostic
-    for supported_type in ("book", "article"):
+    for supported_type in ("book", "article", "beamer"):
         assert supported_type in diagnostic
 
 
@@ -197,3 +223,135 @@ def test_document_options_rejects_invalid_layout_with_supported_values(tmp_path)
     assert "slide-deck" in diagnostic
     for supported_layout in ("standard", "cheatsheet"):
         assert supported_layout in diagnostic
+
+
+def test_beamer_document_options_default_theme_system_values(tmp_path):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / "beamer-defaults.md",
+        """
+        document_type: beamer
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "document_type") == "beamer"
+    assert _option_value(options, "palette") == "red"
+    assert _option_value(options, "aspectratio") == "169"
+    assert _option_value(options, "footline") == "full"
+    assert _option_value(options, "logo") is None
+
+
+@pytest.mark.parametrize("palette", ("red", "blue", "yellow", "gray", "mono"))
+def test_beamer_document_options_accept_valid_palette_values(tmp_path, palette):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / f"beamer-palette-{palette}.md",
+        f"""
+        document_type: beamer
+        palette: {palette}
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "palette") == palette
+
+
+@pytest.mark.parametrize("aspectratio", ("43", "54", "149", "1610", "169", "32"))
+def test_beamer_document_options_accept_valid_aspectratio_values(
+    tmp_path,
+    aspectratio,
+):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / f"beamer-aspectratio-{aspectratio}.md",
+        f"""
+        document_type: beamer
+        aspectratio: {aspectratio}
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "aspectratio") == aspectratio
+
+
+@pytest.mark.parametrize("footline", ("full", "page", "none"))
+def test_beamer_document_options_accept_valid_footline_values(tmp_path, footline):
+    module = _document_options_module()
+    input_path = _write_markdown(
+        tmp_path / f"beamer-footline-{footline}.md",
+        f"""
+        document_type: beamer
+        footline: {footline}
+        """,
+    )
+
+    options = _resolve(module, input_path)
+
+    assert _option_value(options, "footline") == footline
+
+
+def test_beamer_document_options_reject_invalid_palette(tmp_path):
+    module = _document_options_module()
+    error_type = getattr(module, "DocumentOptionsError", ValueError)
+    input_path = _write_markdown(
+        tmp_path / "invalid-palette.md",
+        """
+        document_type: beamer
+        palette: ultraviolet
+        """,
+    )
+
+    with pytest.raises(error_type) as excinfo:
+        _resolve(module, input_path)
+
+    diagnostic = str(excinfo.value).lower()
+    assert "palette" in diagnostic
+    assert "ultraviolet" in diagnostic
+    for supported_palette in ("red", "blue", "yellow", "gray", "mono"):
+        assert supported_palette in diagnostic
+
+
+def test_beamer_document_options_reject_invalid_aspectratio(tmp_path):
+    module = _document_options_module()
+    error_type = getattr(module, "DocumentOptionsError", ValueError)
+    input_path = _write_markdown(
+        tmp_path / "invalid-aspectratio.md",
+        """
+        document_type: beamer
+        aspectratio: cinema
+        """,
+    )
+
+    with pytest.raises(error_type) as excinfo:
+        _resolve(module, input_path)
+
+    diagnostic = str(excinfo.value).lower()
+    assert "aspectratio" in diagnostic
+    assert "cinema" in diagnostic
+    for supported_aspectratio in ("43", "1610", "149", "54", "32", "169"):
+        assert supported_aspectratio in diagnostic
+
+
+def test_beamer_document_options_reject_invalid_footline(tmp_path):
+    module = _document_options_module()
+    error_type = getattr(module, "DocumentOptionsError", ValueError)
+    input_path = _write_markdown(
+        tmp_path / "invalid-footline.md",
+        """
+        document_type: beamer
+        footline: progress
+        """,
+    )
+
+    with pytest.raises(error_type) as excinfo:
+        _resolve(module, input_path)
+
+    diagnostic = str(excinfo.value).lower()
+    assert "footline" in diagnostic
+    assert "progress" in diagnostic
+    for supported_footline in ("full", "page", "none"):
+        assert supported_footline in diagnostic

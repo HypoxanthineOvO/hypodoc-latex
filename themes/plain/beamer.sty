@@ -1,4 +1,24 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{beamer}[2026/06/28 Hypo-LaTeX plain beamer placeholder]
+\ProvidesFile{hypolatex-theme-plain-beamer.sty}[2026/07/04 Hypo-LaTeX plain Beamer theme adapter]
 
-\PackageInfo{hypolatex-plain-beamer}{The plain beamer adapter is reserved for a later milestone.}
+\mode<presentation>
+
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+\definecolor{HypoPlainBeamerMain}{HTML}{8B0000}
+\definecolor{HypoPlainBeamerInk}{HTML}{1F2937}
+\definecolor{HypoPlainBeamerMuted}{HTML}{64748B}
+\definecolor{HypoPlainBeamerPanel}{HTML}{F8FAFC}
+\colorlet{HypoPlainBlockFrame}{HypoPlainBeamerMain!40!white}
+\colorlet{HypoPlainBlockTitleBg}{HypoPlainBeamerMain!12!white}
+\colorlet{HypoPlainBlockBodyBg}{HypoPlainBeamerMain!4!white}
+
+\setbeamercolor{normal text}{fg=HypoPlainBeamerInk,bg=white}
+\setbeamercolor{structure}{fg=HypoPlainBeamerMain}
+\setbeamercolor{frametitle}{fg=white,bg=HypoPlainBeamerMain}
+\setbeamercolor{block title}{fg=HypoPlainBeamerMain,bg=HypoPlainBlockTitleBg}
+\setbeamercolor{block body}{fg=HypoPlainBeamerInk,bg=HypoPlainBlockBodyBg}
+\setbeamercolor{section page}{fg=white,bg=HypoPlainBeamerMain}
+\setbeamerfont{frametitle}{series=\bfseries}

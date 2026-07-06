@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 
 from hypolatex import document_options
+from hypolatex import slides
 from hypolatex import themes as themes_module
 
 
@@ -65,7 +66,22 @@ def convert_markdown(
     target_parent.mkdir(parents=True, exist_ok=True)
 
     temp_path = _make_temp_output(target_parent, target.name)
+    normalized_source: Path | None = None
     try:
+        pandoc_source = source
+        if options.document_type == "beamer":
+            try:
+                normalized_markdown = slides.normalize_slides_markdown(source)
+            except slides.SlidesError as exc:
+                raise ConversionError(str(exc)) from exc
+
+            normalized_source = _make_temp_markdown(target_parent, source.name)
+            normalized_source.write_text(
+                _prepend_frontmatter(source, str(normalized_markdown)),
+                encoding="utf-8",
+            )
+            pandoc_source = normalized_source
+
         with (
             resources.as_file(
                 resources.files("hypolatex").joinpath(
@@ -74,26 +90,44 @@ def convert_markdown(
             ) as lua_filter,
             resources.as_file(
                 resources.files("hypolatex").joinpath(
-                    "resources", "templates", "hypolatex.tex"
+                    "resources",
+                    "templates",
+                    _template_name(options.document_type),
                 )
             ) as template,
         ):
+            command = [
+                pandoc,
+                str(pandoc_source),
+                "--from=markdown+yaml_metadata_block+fenced_divs+header_attributes",
+                f"--to={_pandoc_writer(options.document_type)}",
+                "--standalone",
+                "--wrap=none",
+                "--no-highlight",
+                f"--template={template}",
+                f"--lua-filter={lua_filter}",
+                f"--metadata=documentclass:{options.document_type}",
+                f"--metadata=layout:{options.layout}",
+                f"--output={temp_path}",
+            ]
+            if options.document_type == "beamer":
+                command.extend(
+                    [
+                        "--slide-level=3",
+                        f"--metadata=palette:{options.palette}",
+                        f"--metadata=aspectratio:{options.aspectratio}",
+                        f"--metadata=footline:{options.footline}",
+                    ]
+                )
+                if options.logo is not None:
+                    command.append(f"--metadata=logo:{options.logo}")
+            else:
+                command.append(
+                    f"--top-level-division={_top_level_division(options.document_type)}"
+                )
+
             result = subprocess.run(
-                [
-                    pandoc,
-                    str(source),
-                    "--from=markdown+yaml_metadata_block+fenced_divs+header_attributes",
-                    "--to=latex",
-                    "--standalone",
-                    "--wrap=none",
-                    "--no-highlight",
-                    f"--template={template}",
-                    f"--lua-filter={lua_filter}",
-                    f"--top-level-division={_top_level_division(options.document_type)}",
-                    f"--metadata=documentclass:{options.document_type}",
-                    f"--metadata=layout:{options.layout}",
-                    f"--output={temp_path}",
-                ],
+                command,
                 capture_output=True,
                 check=False,
                 text=True,
@@ -106,12 +140,19 @@ def convert_markdown(
         preamble_commands = [f"\\HypoSetAnswerMode{{{options.answer_mode}}}"]
         if _should_emit_theme_selection(effective_theme, theme):
             preamble_commands.append(f"\\HypoUseTheme{{{effective_theme}}}")
-        _insert_preamble_commands(temp_path, preamble_commands)
+        _insert_preamble_commands(
+            temp_path,
+            preamble_commands,
+            package_name=_package_name(options.document_type),
+        )
 
         os.replace(temp_path, target)
     except Exception:
         temp_path.unlink(missing_ok=True)
         raise
+    finally:
+        if normalized_source is not None:
+            normalized_source.unlink(missing_ok=True)
 
     return ConversionResult(input_path=source, output_path=target)
 
@@ -124,8 +165,33 @@ def _make_temp_output(parent: Path, output_name: str) -> Path:
     return Path(name)
 
 
+def _make_temp_markdown(parent: Path, input_name: str) -> Path:
+    prefix = f".{input_name}."
+    descriptor, name = tempfile.mkstemp(prefix=prefix, suffix=".tmp.md", dir=parent)
+    os.close(descriptor)
+    return Path(name)
+
+
 def _should_emit_theme_selection(effective_theme: str, override: str | None) -> bool:
     return override is not None or effective_theme != themes_module.DEFAULT_THEME
+
+
+def _template_name(document_type: str) -> str:
+    if document_type == "beamer":
+        return "hypolatex-beamer.tex"
+    return "hypolatex.tex"
+
+
+def _pandoc_writer(document_type: str) -> str:
+    if document_type == "beamer":
+        return "beamer"
+    return "latex"
+
+
+def _package_name(document_type: str) -> str:
+    if document_type == "beamer":
+        return "hypolatex-beamer"
+    return "hypolatex"
 
 
 def _top_level_division(document_type: str) -> str:
@@ -134,17 +200,37 @@ def _top_level_division(document_type: str) -> str:
     return "chapter"
 
 
-def _insert_preamble_commands(tex_path: Path, commands: list[str]) -> None:
+def _insert_preamble_commands(
+    tex_path: Path, commands: list[str], package_name: str
+) -> None:
     text = tex_path.read_text(encoding="utf-8")
-    needle = "\\usepackage{hypolatex}"
+    needle = f"\\usepackage{{{package_name}}}"
     if needle not in text:
         raise ConversionError(
-            "Generated LaTeX did not load hypolatex, so document options could "
-            "not be applied."
+            f"Generated LaTeX did not load {package_name}, so document options "
+            "could not be applied."
         )
 
     replacement = "\n".join([needle, *commands])
     tex_path.write_text(text.replace(needle, replacement, 1), encoding="utf-8")
+
+
+def _prepend_frontmatter(source: Path, body: str) -> str:
+    frontmatter = _frontmatter_block(source.read_text(encoding="utf-8"))
+    if not frontmatter:
+        return body
+    return f"{frontmatter.rstrip()}\n\n{body.lstrip()}"
+
+
+def _frontmatter_block(text: str) -> str:
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return ""
+
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() in {"---", "..."}:
+            return "".join(lines[: index + 1])
+    return ""
 
 
 def _pandoc_error_detail(result: subprocess.CompletedProcess[str]) -> str:

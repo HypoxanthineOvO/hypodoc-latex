@@ -7,6 +7,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SKILL_FILE = PROJECT_ROOT / "skill" / "SKILL.md"
 TEMPLATE_FILE = PROJECT_ROOT / "skill" / "templates" / "longform.md"
+BEAMER_TEMPLATE_FILE = PROJECT_ROOT / "skill" / "templates" / "beamer.md"
 MIN_PDF_BYTES = 1024
 
 REQUIRED_TEMPLATE_METADATA = (
@@ -80,7 +81,7 @@ ERROR_CONTEXT_WORDS = (
 
 
 def _read_required_file(path: Path) -> str:
-    assert path.is_file(), f"Expected required M4 file to exist: {path}"
+    assert path.is_file(), f"Expected required skill/template file to exist: {path}"
     return path.read_text(encoding="utf-8")
 
 
@@ -361,10 +362,57 @@ def test_skill_markdown_names_mvp_limits():
         "Skill should state that Pandoc is required.",
     )
 
-    _assert_has_negative_limit_context(normalized, "beamer", "Beamer")
-
     _assert_has_negative_limit_context(normalized, "textual", "Textual")
     _assert_has_negative_limit_context(normalized, "tui", "TUI")
+
+
+def test_skill_markdown_guides_beamer_slides_dsl_contract():
+    normalized = _normalized(_read_required_file(SKILL_FILE))
+
+    for required in (
+        "document_type: beamer",
+        "presentation",
+        "slides",
+        "h1",
+        "h2",
+        "h3",
+        "frame_title_inheritance_limit",
+        "continued_title_style",
+        "strict_structure",
+        "skill/templates/beamer.md",
+    ):
+        assert required in normalized
+
+    _assert_near_any(
+        normalized,
+        ("document_type: beamer",),
+        ("presentation", "slides", "alias", "aliases"),
+        "Skill should document the relevant Beamer document_type aliases.",
+    )
+    _assert_near_any(
+        normalized,
+        ("h1", "# "),
+        ("section",),
+        "Skill should state that H1 headings are Beamer sections.",
+    )
+    _assert_near_any(
+        normalized,
+        ("h2", "## "),
+        ("subsection",),
+        "Skill should state that H2 headings are Beamer subsections.",
+    )
+    _assert_near_any(
+        normalized,
+        ("h3", "### "),
+        ("frame title", "frame titles"),
+        "Skill should state that H3 headings are frame titles.",
+    )
+    _assert_near_any(
+        normalized,
+        ("---",),
+        ("frame separator", "new frame", "split"),
+        "Skill should document `---` as the frame separator.",
+    )
 
 
 def test_longform_template_covers_confirmed_metadata_and_directives():
@@ -398,6 +446,47 @@ def test_longform_template_covers_confirmed_metadata_and_directives():
 def _has_callout_directive(text: str, directive: str) -> bool:
     return f":::{directive}" in text or bool(
         re.search(rf":::\s*\{{[^}}]*\.{re.escape(directive)}\b", text)
+    )
+
+
+def test_beamer_template_is_public_function_matrix_deck_contract():
+    text = _read_required_file(BEAMER_TEMPLATE_FILE)
+    normalized = _normalized(text)
+    frontmatter = _frontmatter(text)
+
+    assert frontmatter.get("document_type") == "beamer"
+    assert frontmatter.get("title")
+    assert frontmatter.get("theme")
+    assert "function matrix" in normalized
+
+    for expected_marker in (
+        "domain",
+        "codomain",
+        "kernel",
+        "image",
+        "rank",
+        "linear",
+        "matrix",
+    ):
+        assert expected_marker in normalized
+
+    assert re.search(r"(?m)^#\s+\S", text), (
+        "Beamer template should include H1 section headings."
+    )
+    assert re.search(r"(?m)^##\s+\S", text), (
+        "Beamer template should include H2 subsection headings."
+    )
+    assert len(re.findall(r"(?m)^###\s+\S", text)) >= 4, (
+        "Beamer template should include multiple H3 frame titles."
+    )
+    assert re.search(r"(?m)^---\s*$", text), (
+        "Beamer template should demonstrate a frame separator."
+    )
+    assert _has_callout_directive(text, "objective") or _has_callout_directive(
+        text, "task"
+    ), "Beamer template should demonstrate semantic slide blocks."
+    assert _has_callout_directive(text, "table"), (
+        "Beamer template should demonstrate the controlled `.table` DSL."
     )
 
 
